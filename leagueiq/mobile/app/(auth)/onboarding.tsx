@@ -108,7 +108,7 @@ export default function OnboardingScreen() {
     if (error) { Alert.alert('Error', error.message); return }
 
     await refreshProfile()
-    router.replace('/(app)/')
+    router.replace('/(app)')
   }
 
   // ── Step 1: Username ──────────────────────────────────────────

@@ -1,12 +1,12 @@
 import { useEffect } from 'react'
-import { Slot, useRouter, useSegments } from 'expo-router'
+import { Stack, useRouter, useSegments } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import { AuthProvider, useAuth } from '../contexts/AuthContext'
 
 function InitialLayout() {
   const { session, profile, loading } = useAuth()
   const router = useRouter()
-  const segments = useSegments()
+  const segments = useSegments() as string[]
 
   useEffect(() => {
     if (loading) return
@@ -23,11 +23,24 @@ function InitialLayout() {
     if (!profile.onboarding_completed) {
       if (segments[1] !== 'onboarding') router.replace('/(auth)/onboarding')
     } else if (inAuth) {
-      router.replace('/(app)/')
+      router.replace('/(app)')
     }
   }, [session, profile, loading])
 
-  return <Slot />
+  return (
+    <Stack
+      screenOptions={{
+        headerShown:  false,
+        contentStyle: { backgroundColor: '#080B14' },
+        animation:    'slide_from_right',
+      }}
+    >
+      <Stack.Screen name="(auth)" />
+      <Stack.Screen name="(app)" />
+      <Stack.Screen name="game" options={{ animation: 'slide_from_bottom' }} />
+      <Stack.Screen name="match" options={{ animation: 'slide_from_bottom' }} />
+    </Stack>
+  )
 }
 
 export default function RootLayout() {
