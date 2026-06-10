@@ -44,7 +44,7 @@ Deno.serve(async (req) => {
         amount: PLAN_PRICES[plan],
         reference,
         metadata: { user_id: user.id, plan },
-        callback_url: `${Deno.env.get('SUPABASE_URL')}/functions/v1/verify-payment`,
+        callback_url: `${Deno.env.get('APP_URL')}/payment/callback`,
       }),
     })
 

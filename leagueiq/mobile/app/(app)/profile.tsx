@@ -9,7 +9,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import LevelBadge from '../../components/LevelBadge'
 import StreakBadge from '../../components/StreakBadge'
 import { COLORS, LEAGUE_NAMES, LEAGUE_COLORS } from '../../lib/colors'
-import { getUserStats, fetchLeagues, fetchLeagueMastery, createPayment, verifyPayment } from '../../lib/api'
+import { getUserStats, fetchLeagues, fetchLeagueMastery, createPayment, verifyPayment, activateXpBooster } from '../../lib/api'
 import type { League, LeagueMastery } from '../../types'
 import { openBrowserAsync } from 'expo-web-browser'
 
@@ -24,14 +24,18 @@ export default function ProfileScreen() {
   const { profile, signOut, refreshProfile } = useAuth()
   const router = useRouter()
 
-  const [stats, setStats]   = useState<Stats | null>(null)
-  const [leagues, setLeagues] = useState<League[]>([])
-  const [mastery, setMastery] = useState<LeagueMastery[]>([])
-  const [loading, setLoading] = useState(true)
-  const [upgrading, setUpgrading] = useState(false)
+  const [stats,         setStats]         = useState<Stats | null>(null)
+  const [leagues,       setLeagues]       = useState<League[]>([])
+  const [mastery,       setMastery]       = useState<LeagueMastery[]>([])
+  const [loading,       setLoading]       = useState(true)
+  const [upgrading,     setUpgrading]     = useState(false)
+  const [boosting,      setBoosting]      = useState(false)
+  const [boosterExpiry, setBoosterExpiry] = useState<string | null>(null)
 
   useEffect(() => {
     if (!profile) return
+    const expiry = (profile as unknown as { xp_booster_expires_at?: string | null }).xp_booster_expires_at ?? null
+    setBoosterExpiry(expiry)
     Promise.all([
       getUserStats(),
       fetchLeagues(),
@@ -56,6 +60,28 @@ export default function ProfileScreen() {
     } finally {
       setUpgrading(false)
     }
+  }
+
+  async function handleBooster() {
+    setBoosting(true)
+    try {
+      const { xp_booster_expires_at } = await activateXpBooster()
+      setBoosterExpiry(xp_booster_expires_at)
+      Alert.alert('Activated!', '2× XP Booster is active for 24 hours.')
+    } catch (e: unknown) {
+      Alert.alert('Error', e instanceof Error ? e.message : 'Could not activate booster')
+    } finally {
+      setBoosting(false)
+    }
+  }
+
+  function boosterLabel(): string {
+    if (!boosterExpiry) return 'Not active'
+    const remaining = new Date(boosterExpiry).getTime() - Date.now()
+    if (remaining <= 0) return 'Expired'
+    const hrs  = Math.floor(remaining / 3_600_000)
+    const mins = Math.floor((remaining % 3_600_000) / 60_000)
+    return hrs > 0 ? `Active · ${hrs}h ${mins}m left` : `Active · ${mins}m left`
   }
 
   function getMastery(leagueId: string) {
@@ -130,6 +156,35 @@ export default function ProfileScreen() {
             )
           })}
         </View>
+
+        {/* XP Booster — premium only */}
+        {profile.is_premium && (
+          <View style={styles.boosterCard}>
+            <View style={styles.boosterHeader}>
+              <Text style={styles.boosterTitle}>⚡ XP Booster</Text>
+              <Text style={[
+                styles.boosterStatus,
+                { color: boosterExpiry && new Date(boosterExpiry) > new Date() ? '#22c55e' : COLORS.textMuted },
+              ]}>
+                {boosterLabel()}
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={[
+                styles.premiumBtn,
+                styles.premiumBtnPrimary,
+                (boosting || (boosterExpiry ? new Date(boosterExpiry) > new Date() : false)) && styles.btnDisabled,
+              ]}
+              onPress={handleBooster}
+              disabled={boosting || (boosterExpiry ? new Date(boosterExpiry) > new Date() : false)}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.premiumBtnText, styles.premiumBtnTextPrimary]}>
+                {boosting ? 'Activating…' : boosterExpiry && new Date(boosterExpiry) > new Date() ? 'Already Active' : 'Activate 2× XP (24h)'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Premium upgrade */}
         {!profile.is_premium && (
@@ -256,6 +311,20 @@ const styles = StyleSheet.create({
   },
   masteryBarFill:  { height: 6, borderRadius: 4 },
   masteryCount:    { color: COLORS.textMuted, fontSize: 11 },
+
+  boosterCard: {
+    backgroundColor: COLORS.surface,
+    borderRadius:    16,
+    borderWidth:     1,
+    borderColor:     COLORS.border,
+    padding:         20,
+    marginBottom:    16,
+    gap:             12,
+  },
+  boosterHeader: { gap: 4 },
+  boosterTitle:  { color: COLORS.textPrimary, fontSize: 16, fontWeight: '800' },
+  boosterStatus: { fontSize: 13, fontWeight: '600' },
+  btnDisabled:   { opacity: 0.4 },
 
   premiumCard: {
     backgroundColor: 'rgba(245,197,24,0.06)',

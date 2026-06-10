@@ -1,4 +1,4 @@
-import { supabase } from './supabase'
+import { createClient } from '@/lib/supabase/client'
 import type {
   StartSessionPayload,
   StartSessionResponse,
@@ -18,13 +18,13 @@ import type {
   CreatePaymentPayload,
   CreatePaymentResponse,
   VerifyPaymentPayload,
-  GameMode,
   League,
   Category,
   LeagueMastery,
-} from '../types'
+} from '@/types'
 
 async function invoke<T>(fn: string, body?: object): Promise<T> {
+  const supabase = createClient()
   const { data, error } = await supabase.functions.invoke<T>(fn, { body })
   if (error) throw new Error(error.message)
   if (!data) throw new Error(`No data from ${fn}`)
@@ -87,7 +87,7 @@ export const submitTournamentScore = (tournamentId: string, score: number) =>
 // ── Content ───────────────────────────────────────────────────
 
 export const getQuestionOfTheDay = () =>
-  invoke<{ question: import('../types').Question }>('question-of-the-day')
+  invoke<{ question: import('@/types').Question }>('question-of-the-day')
 
 export const getDailyChallenge = (leagueId: string) =>
   invoke<StartSessionResponse>('daily-challenge', { league_id: leagueId })
@@ -115,14 +115,10 @@ export const verifyPayment = (p: VerifyPaymentPayload) =>
 export const activateXpBooster = () =>
   invoke<{ xp_booster_expires_at: string }>('activate-xp-booster')
 
-// ── Push ──────────────────────────────────────────────────────
-
-export const registerPushToken = (token: string) =>
-  invoke<void>('register-push-token', { token })
-
-// ── DB helpers (direct Supabase queries) ──────────────────────
+// ── DB helpers ────────────────────────────────────────────────
 
 export async function fetchLeagues(): Promise<League[]> {
+  const supabase = createClient()
   const { data, error } = await supabase
     .from('leagues')
     .select('*')
@@ -132,6 +128,7 @@ export async function fetchLeagues(): Promise<League[]> {
 }
 
 export async function fetchCategories(leagueId: string): Promise<Category[]> {
+  const supabase = createClient()
   const { data, error } = await supabase
     .from('categories')
     .select('*')
@@ -142,6 +139,7 @@ export async function fetchCategories(leagueId: string): Promise<Category[]> {
 }
 
 export async function fetchLeagueMastery(userId: string): Promise<LeagueMastery[]> {
+  const supabase = createClient()
   const { data, error } = await supabase
     .from('league_mastery')
     .select('*')

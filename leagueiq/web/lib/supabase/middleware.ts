@@ -1,6 +1,8 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+type CookieEntry = { name: string; value: string; options?: Record<string, unknown> }
+
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
@@ -12,7 +14,7 @@ export async function updateSession(request: NextRequest) {
         getAll() {
           return request.cookies.getAll()
         },
-        setAll(cookiesToSet) {
+        setAll(cookiesToSet: CookieEntry[]) {
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
           supabaseResponse = NextResponse.next({ request })
           cookiesToSet.forEach(({ name, value, options }) =>
@@ -46,13 +48,20 @@ export async function updateSession(request: NextRequest) {
   if (user && !isPublic && pathname !== '/onboarding') {
     const { data: profile } = await supabase
       .from('profiles')
-      .select('onboarding_completed')
+      .select('onboarding_completed, role')
       .eq('id', user.id)
       .single()
 
     if (profile && !profile.onboarding_completed) {
       const url = request.nextUrl.clone()
       url.pathname = '/onboarding'
+      return NextResponse.redirect(url)
+    }
+
+    // Guard: only admins can access /admin routes
+    if (pathname.startsWith('/admin') && profile?.role !== 'admin') {
+      const url = request.nextUrl.clone()
+      url.pathname = '/home'
       return NextResponse.redirect(url)
     }
   }
