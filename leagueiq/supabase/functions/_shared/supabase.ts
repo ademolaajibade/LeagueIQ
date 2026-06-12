@@ -71,3 +71,22 @@ export function calcMasteryLevel(categoriesCompleted: number): string {
   if (categoriesCompleted >= 2) return 'Fan'
   return 'Rookie'
 }
+
+// ── Push Notifications ────────────────────────────────────────
+
+export async function sendPushNotification(
+  pushToken: string,
+  title: string,
+  body: string,
+  data?: Record<string, unknown>,
+): Promise<void> {
+  try {
+    await fetch('https://exp.host/--/api/v2/push/send', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body:    JSON.stringify({ to: pushToken, title, body, sound: 'default', data }),
+    })
+  } catch {
+    // Fire-and-forget — never let a push failure break game logic
+  }
+}

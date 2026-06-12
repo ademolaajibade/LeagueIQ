@@ -1,5 +1,5 @@
 import { corsHeaders } from '../_shared/cors.ts'
-import { adminClient, getToken, respond, unauthorized, badRequest, serverError } from '../_shared/supabase.ts'
+import { adminClient, getToken, respond, unauthorized, badRequest, serverError, sendPushNotification } from '../_shared/supabase.ts'
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
@@ -47,6 +47,28 @@ Deno.serve(async (req) => {
     const orderedQuestions = questionIds
       .map((id) => questions?.find((q) => q.id === id))
       .filter(Boolean)
+
+    // Notify player1 that their match has a challenger
+    const { data: joiner } = await db
+      .from('profiles')
+      .select('username')
+      .eq('id', user.id)
+      .single()
+
+    const { data: player1 } = await db
+      .from('profiles')
+      .select('push_token, notifications_enabled')
+      .eq('id', updatedMatch.player1_id)
+      .single()
+
+    if (player1?.push_token && player1.notifications_enabled) {
+      await sendPushNotification(
+        player1.push_token,
+        '⚔️ 1v1 Challenge Accepted!',
+        `@${joiner?.username ?? 'Someone'} joined your match. Good luck!`,
+        { type: 'match_invite', match_id: updatedMatch.id },
+      )
+    }
 
     return respond({ match: updatedMatch, questions: orderedQuestions })
   } catch (e) {

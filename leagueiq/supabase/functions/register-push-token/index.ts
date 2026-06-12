@@ -13,8 +13,8 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json()
-    const { push_token } = body
-    if (!push_token) return badRequest('push_token is required')
+    const push_token: string | undefined = body.token ?? body.push_token
+    if (!push_token) return badRequest('token is required')
 
     const { error } = await db
       .from('profiles')

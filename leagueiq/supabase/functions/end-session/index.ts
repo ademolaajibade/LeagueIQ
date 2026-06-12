@@ -1,7 +1,7 @@
 import { corsHeaders } from '../_shared/cors.ts'
 import {
   adminClient, getToken, respond, unauthorized, badRequest, serverError,
-  calcLevel, calcMasteryLevel,
+  calcLevel, calcMasteryLevel, sendPushNotification,
 } from '../_shared/supabase.ts'
 
 Deno.serve(async (req) => {
@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
     // Fetch current profile
     const { data: profile, error: profileErr } = await db
       .from('profiles')
-      .select('xp, level, streak')
+      .select('xp, level, streak, push_token, notifications_enabled')
       .eq('id', user.id)
       .single()
 
@@ -139,6 +139,20 @@ Deno.serve(async (req) => {
       .select('id', { count: 'exact' })
       .eq('league_id', completedSession.league_id)
       .gt('total_score', completedSession.score + (existingLb?.total_score ?? 0))
+
+    // Notify on level up
+    if (levelUp && profile.push_token && profile.notifications_enabled) {
+      const levelEmoji: Record<string, string> = {
+        Silver: '🥈', Gold: '🥇', Platinum: '💎', Legend: '👑',
+      }
+      const emoji = levelEmoji[levelUp] ?? '⬆️'
+      await sendPushNotification(
+        profile.push_token,
+        `${emoji} Level Up!`,
+        `You've reached ${levelUp}. Keep playing to climb higher!`,
+        { type: 'level_up', new_level: levelUp },
+      )
+    }
 
     return respond({
       session: completedSession,

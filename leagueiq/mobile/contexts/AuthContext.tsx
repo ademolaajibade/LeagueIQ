@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
 import { Session } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
+import { registerForPushNotificationsAsync } from '../lib/notifications'
 import { Profile } from '../types'
 
 interface AuthContextValue {
@@ -18,13 +19,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
 
-  const fetchProfile = async (userId: string) => {
+  const fetchProfile = async (userId: string): Promise<Profile | null> => {
     const { data } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', userId)
       .single()
-    setProfile(data as Profile | null)
+    const p = data as Profile | null
+    setProfile(p)
+    return p
   }
 
   const refreshProfile = async () => {
@@ -35,7 +38,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
       if (session?.user.id) {
-        fetchProfile(session.user.id).finally(() => setLoading(false))
+        fetchProfile(session.user.id)
+          .then((p) => { if (p?.onboarding_completed) registerForPushNotificationsAsync() })
+          .finally(() => setLoading(false))
       } else {
         setLoading(false)
       }
@@ -45,7 +50,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       async (_event, session) => {
         setSession(session)
         if (session?.user.id) {
-          await fetchProfile(session.user.id)
+          const p = await fetchProfile(session.user.id)
+          if (p?.onboarding_completed) registerForPushNotificationsAsync()
         } else {
           setProfile(null)
         }
