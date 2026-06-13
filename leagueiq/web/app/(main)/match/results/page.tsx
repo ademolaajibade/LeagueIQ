@@ -1,11 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { COLORS } from '@/lib/colors'
 
-export default function MatchResultsPage() {
+function MatchResults() {
   const params   = useSearchParams()
   const router   = useRouter()
   const supabase = createClient()
@@ -52,5 +52,13 @@ export default function MatchResultsPage() {
         </button>
       </div>
     </div>
+  )
+}
+
+export default function MatchResultsPage() {
+  return (
+    <Suspense>
+      <MatchResults />
+    </Suspense>
   )
 }

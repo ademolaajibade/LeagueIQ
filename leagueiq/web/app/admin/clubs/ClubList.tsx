@@ -5,7 +5,7 @@ import { deleteClub } from '../actions'
 import ClubForm, { type ClubData } from './ClubForm'
 
 interface League { id: string; name: string }
-interface Club extends ClubData { leagues: { name: string } | null }
+interface Club extends ClubData { leagues: { name: string }[] | { name: string } | null }
 
 export default function ClubList({ clubs, leagues }: { clubs: Club[]; leagues: League[] }) {
   const [editing, setEditing] = useState<string | null>(null)
@@ -19,7 +19,8 @@ export default function ClubList({ clubs, leagues }: { clubs: Club[]; leagues: L
   // Group by league
   const grouped: Record<string, { leagueName: string; clubs: Club[] }> = {}
   for (const club of clubs) {
-    const name = club.leagues?.name ?? 'Unknown'
+    const leagueObj = Array.isArray(club.leagues) ? club.leagues[0] : club.leagues
+    const name = leagueObj?.name ?? 'Unknown'
     if (!grouped[club.league_id]) grouped[club.league_id] = { leagueName: name, clubs: [] }
     grouped[club.league_id].clubs.push(club)
   }

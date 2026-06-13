@@ -26,7 +26,17 @@ import type {
 
 async function invoke<T>(fn: string, body?: object): Promise<T> {
   const { data, error } = await supabase.functions.invoke<T>(fn, { body })
-  if (error) throw new Error(error.message)
+  if (error) {
+    let detail = error.message
+    try {
+      const ctx = (error as unknown as { context?: Response }).context
+      if (ctx) {
+        const json = await ctx.clone().json()
+        detail = json?.error ?? json?.message ?? error.message
+      }
+    } catch { /* ignore parse errors */ }
+    throw new Error(`[${fn}] ${detail}`)
+  }
   if (!data) throw new Error(`No data from ${fn}`)
   return data
 }

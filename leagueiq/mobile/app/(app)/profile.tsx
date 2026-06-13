@@ -44,7 +44,8 @@ export default function ProfileScreen() {
       setStats(s)
       setLeagues(ls)
       setMastery(ms)
-    }).finally(() => setLoading(false))
+    }).catch(console.error)
+      .finally(() => setLoading(false))
   }, [profile?.id])
 
   async function handleUpgrade(plan: 'monthly' | 'yearly') {

@@ -30,7 +30,7 @@ export default async function TournamentsPage() {
           {(tournaments ?? []).length === 0 ? (
             <div style={{ color: '#475569', fontSize: 14 }}>No tournaments yet</div>
           ) : (tournaments ?? []).map(t => {
-            const leagueName = (t.leagues as { name: string } | null)?.name ?? '—'
+            const leagueName = (t.leagues as unknown as { name: string } | null)?.name ?? '—'
             const entries    = (t.tournament_entries as { count: number }[] | null)?.[0]?.count ?? 0
             return (
               <div key={t.id} style={{ padding: '14px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>

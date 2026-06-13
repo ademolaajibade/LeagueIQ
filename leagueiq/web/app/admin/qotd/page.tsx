@@ -26,7 +26,7 @@ export default async function QotdPage() {
           {(entries ?? []).length === 0 ? (
             <div style={{ color: '#475569', fontSize: 14 }}>No QOTD scheduled yet</div>
           ) : (entries ?? []).map(e => {
-            const q = e.questions as { question: string; league_id: string; leagues: { name: string } | null } | null
+            const q = e.questions as unknown as { question: string; league_id: string; leagues: { name: string } | null } | null
             return (
               <div key={e.id} style={{ padding: '12px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>

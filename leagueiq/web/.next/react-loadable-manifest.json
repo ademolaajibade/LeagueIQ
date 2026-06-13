@@ -1,0 +1,6 @@
+{
+  "app/(main)/play/page.tsx -> @/lib/supabase/client": {
+    "id": 970,
+    "files": []
+  }
+}

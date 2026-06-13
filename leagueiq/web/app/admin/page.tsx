@@ -56,7 +56,7 @@ export default async function AdminDashboard() {
   // Aggregate questions per league
   const qByLeague: Record<string, { name: string; count: number }> = {}
   for (const q of questionLeagueRows ?? []) {
-    const name = (q.leagues as { name: string } | null)?.name ?? 'Unknown'
+    const name = (q.leagues as unknown as { name: string } | null)?.name ?? 'Unknown'
     if (!qByLeague[q.league_id]) qByLeague[q.league_id] = { name, count: 0 }
     qByLeague[q.league_id].count++
   }
@@ -64,7 +64,7 @@ export default async function AdminDashboard() {
   // Aggregate sessions per league (last 7d)
   const sByLeague: Record<string, { name: string; count: number }> = {}
   for (const s of sessionLeagueRows ?? []) {
-    const name = (s.leagues as { name: string } | null)?.name ?? 'Unknown'
+    const name = (s.leagues as unknown as { name: string } | null)?.name ?? 'Unknown'
     if (!sByLeague[s.league_id]) sByLeague[s.league_id] = { name, count: 0 }
     sByLeague[s.league_id].count++
   }

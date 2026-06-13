@@ -66,8 +66,8 @@ export default async function QuestionsPage({ searchParams }: { searchParams: Pr
             <span style={{ color: q.is_active ? '#FFFFFF' : '#475569', fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', paddingRight: 16 }}>
               {q.question}
             </span>
-            <span style={{ color: '#94A3B8', fontSize: 13 }}>{(q.leagues as { name: string } | null)?.name ?? '—'}</span>
-            <span style={{ color: '#94A3B8', fontSize: 13 }}>{(q.categories as { name: string } | null)?.name ?? '—'}</span>
+            <span style={{ color: '#94A3B8', fontSize: 13 }}>{(q.leagues as unknown as { name: string } | null)?.name ?? '—'}</span>
+            <span style={{ color: '#94A3B8', fontSize: 13 }}>{(q.categories as unknown as { name: string } | null)?.name ?? '—'}</span>
             <span style={{ color: diffColor(q.difficulty), fontSize: 13, textTransform: 'capitalize' }}>{q.difficulty}</span>
             <div style={{ display: 'flex', gap: 8 }}>
               <Link

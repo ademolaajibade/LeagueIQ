@@ -1,13 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { COLORS } from '@/lib/colors'
 import { verifyPayment } from '@/lib/api'
 
 type Status = 'verifying' | 'success' | 'failed'
 
-export default function PaymentCallbackPage() {
+function PaymentCallback() {
   const router       = useRouter()
   const searchParams = useSearchParams()
   const reference    = searchParams.get('reference') ?? searchParams.get('trxref')
@@ -85,5 +85,13 @@ export default function PaymentCallbackPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function PaymentCallbackPage() {
+  return (
+    <Suspense>
+      <PaymentCallback />
+    </Suspense>
   )
 }

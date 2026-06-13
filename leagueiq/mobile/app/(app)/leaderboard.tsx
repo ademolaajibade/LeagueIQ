@@ -32,10 +32,12 @@ export default function LeaderboardScreen() {
   }, [])
 
   useEffect(() => {
+    if (!profile) return
     setLoading(true)
     const leagueId = leagueIdx >= 0 ? leagues[leagueIdx]?.id : undefined
     getLeaderboard({ league_id: leagueId, period, limit: 50 })
       .then(setData)
+      .catch(console.error)
       .finally(() => setLoading(false))
   }, [leagueIdx, period, leagues])
 
