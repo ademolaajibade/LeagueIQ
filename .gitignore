@@ -1,2 +1,12 @@
 AGENT.md
 ARCHITECTURE.md
+
+# Environment variables — never commit secrets
+.env
+.env.local
+.env.*.local
+.env*.local
+**/.env
+**/.env.local
+**/.env.*.local
+**/.env*.local
