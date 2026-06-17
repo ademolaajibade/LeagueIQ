@@ -649,7 +649,11 @@ begin
 
   (v_league, v_mg, 'Which manager replaced José Mourinho at AS Roma in 2024?',
    '["Daniele De Rossi","Claudio Ranieri","Vincenzo Italiano","Paulo Fonseca"]', 0, 'medium',
-   'Daniele De Rossi replaced José Mourinho as Roma manager in January 2024 when Mourinho was sacked. De Rossi, a club legend, was a popular choice with the Roma fanbase.');
+   'Daniele De Rossi replaced José Mourinho as Roma manager in January 2024 when Mourinho was sacked. De Rossi, a club legend, was a popular choice with the Roma fanbase.'),
+
+  (v_league, v_mg, 'Simone Inzaghi replaced Antonio Conte as Inter Milan manager in 2021. Which Serie A club had he previously managed?',
+   '["AS Roma","Napoli","Lazio","Juventus"]', 2, 'easy',
+   'Simone Inzaghi managed Lazio from 2016 to 2021, winning the Coppa Italia in 2019 and regularly qualifying for European competition. He then joined Inter Milan in 2021 and guided them to the Serie A title in 2023–24 and the Champions League Final in 2022–23, where they lost 1–0 to Manchester City.');
 
   -- ============================================================
   -- TRANSFERS (30)
@@ -770,7 +774,11 @@ begin
 
   (v_league, v_tr, 'Sandro Tonali left AC Milan for Newcastle United in 2023 for how much?',
    '["€55m","€60m","€70m","€80m"]', 2, 'medium',
-   'Sandro Tonali joined Newcastle United from AC Milan for €70 million in July 2023 in a then record sale for Milan. He subsequently received a ban for betting violations in Italy.');
+   'Sandro Tonali joined Newcastle United from AC Milan for €70 million in July 2023 in a then record sale for Milan. He subsequently received a ban for betting violations in Italy.'),
+
+  (v_league, v_tr, 'Nicolò Barella joined Inter Milan from which Serie A club in 2020, becoming one of the league''s finest midfielders?',
+   '["Cagliari","Sassuolo","Fiorentina","Atalanta"]', 0, 'medium',
+   'Nicolò Barella initially joined Inter Milan on loan from Cagliari in 2019 before the move was made permanent for approximately €45 million in 2020. He became integral to Inter''s Serie A success and was a key player in Italy''s Euro 2020 triumph.');
 
   -- ============================================================
   -- STADIUM & CULTURE (30)

@@ -645,7 +645,11 @@ begin
 
   (v_league, v_mg, 'Oliver Glasner won the Europa League with Eintracht Frankfurt. Which club did he manage next?',
    '["Wolfsburg","Crystal Palace","VfL Bochum","Hertha BSC"]', 1, 'medium',
-   'Oliver Glasner joined Crystal Palace in England in February 2024 after leaving Eintracht Frankfurt, and helped them survive Premier League relegation before a new project in south London began.');
+   'Oliver Glasner joined Crystal Palace in England in February 2024 after leaving Eintracht Frankfurt, and helped them survive Premier League relegation before a new project in south London began.'),
+
+  (v_league, v_mg, 'Jürgen Klopp managed which Bundesliga club before Borussia Dortmund, earning his first major managerial recognition?',
+   '["Hamburger SV","Bayer Leverkusen","Mainz 05","VfB Stuttgart"]', 2, 'medium',
+   'Jürgen Klopp managed Mainz 05 from 2001 to 2008, taking the club from the 2. Bundesliga (second division) to the Bundesliga for the first time in their history in 2004. His work at Mainz — building a cohesive, high-energy pressing team on a tiny budget — attracted Borussia Dortmund, who appointed him in July 2008.');
 
   -- ============================================================
   -- TRANSFERS (30)
@@ -762,7 +766,15 @@ begin
 
   (v_league, v_tr, 'Which player''s move from Bayern Munich to Barcelona under the "free agent" status caused significant controversy?',
    '["Toni Kroos","Robert Lewandowski","David Alaba","Serge Gnabry"]', 2, 'medium',
-   'David Alaba left Bayern Munich on a free transfer in 2021 after contract negotiations broke down. He joined Real Madrid, where he has become a key centre-back and helped them win multiple La Liga titles and Champions Leagues.');
+   'David Alaba left Bayern Munich on a free transfer in 2021 after contract negotiations broke down. He joined Real Madrid, where he has become a key centre-back and helped them win multiple La Liga titles and Champions Leagues.'),
+
+  (v_league, v_tr, 'Manuel Neuer joined Bayern Munich from which Bundesliga rival in 2011, in a move that caused outrage among the selling club''s fans?',
+   '["Hamburger SV","Bayer Leverkusen","Borussia Dortmund","Schalke 04"]', 3, 'medium',
+   'Manuel Neuer joined Bayern Munich from Schalke 04 for approximately €25 million in June 2011, causing widespread anger among Schalke supporters. He had been Schalke''s first-choice goalkeeper since 2006 and was deeply associated with the club. He became one of the world''s greatest goalkeepers at Bayern.'),
+
+  (v_league, v_tr, 'Robert Lewandowski moved from Borussia Dortmund to Bayern Munich in 2014 on what financial terms?',
+   '["€20 million","€30 million","€15 million","Free transfer — his contract had expired"]', 3, 'medium',
+   'Robert Lewandowski joined Bayern Munich on a free transfer in July 2014 after his Borussia Dortmund contract expired — one of the most damaging "Bosman" transfers in Bundesliga history. Bayern had announced the signing six months early in January 2014, leaving Dortmund unable to sell him.');
 
   -- ============================================================
   -- STADIUM & CULTURE (30)
@@ -871,7 +883,23 @@ begin
 
   (v_league, v_sc, 'Bayern Munich''s 23-time German champion Uli Hoeneß is known as what in Munich?',
    '["The Kaiser","The Patriarch","The Red Baron","The Bayern God"]', 1, 'medium',
-   'Uli Hoeneß is often called "The Patriarch" of Bayern Munich — the dominant figure who shaped the club''s modern identity as both sporting director and president across five decades, despite serving a prison term for tax evasion.');
+   'Uli Hoeneß is often called "The Patriarch" of Bayern Munich — the dominant figure who shaped the club''s modern identity as both sporting director and president across five decades, despite serving a prison term for tax evasion.'),
+
+  (v_league, v_sc, 'Signal Iduna Park in Dortmund holds approximately how many fans at capacity, making it the largest football stadium in Germany?',
+   '["67,000","72,000","81,365","90,000"]', 2, 'easy',
+   'Signal Iduna Park has a capacity of 81,365, making it the largest football stadium in Germany and one of the largest in Europe. In UEFA competition, when standing sections are converted to seats, capacity reduces to approximately 66,099. The famous Südtribüne alone holds 25,000 standing fans.'),
+
+  (v_league, v_sc, 'Hamburger SV held which unique distinction in the Bundesliga from the competition''s founding in 1963 until their relegation in 2018?',
+   '["Most Bundesliga titles in a row","Only club to win every European match","Only founding member never to be relegated","Top scorer every season"]', 2, 'easy',
+   'Hamburger SV were the only club to compete in every single Bundesliga season from its founding in 1963 until their relegation in 2017–18 — 55 consecutive seasons in the top flight. Their final relegation ended one of German football''s most remarkable statistical records.'),
+
+  (v_league, v_sc, 'Schalke 04''s modern stadium, the Veltins-Arena, was previously known by which name when it opened in 2001?',
+   '["Signal Iduna Park","Arena AufSchalke","Parkstadion","Glücksauf-Kampfbahn"]', 1, 'medium',
+   'Schalke 04''s stadium opened in 2001 as the "Arena AufSchalke" (translating roughly as "On Schalke Arena") before acquiring the Veltins naming rights in 2005. Their historic ground, the Glücksauf-Kampfbahn, had served the club since 1928 and embodied the Ruhr mining community''s identity.'),
+
+  (v_league, v_sc, 'What is the name of Bayern Munich''s famous training facility, the address of which has become synonymous with the club''s day-to-day operations?',
+   '["Allianz Campus","Bayern Gelände","Säbener Strasse","Rote Arena"]', 2, 'medium',
+   'Bayern Munich''s training ground on Säbener Strasse in Munich has been their home since 1971. The address is shorthand in German football for Bayern''s operations — signings are confirmed there, press conferences are held there, and it is one of the most famous training addresses in world football.');
 
 end;
 $$;

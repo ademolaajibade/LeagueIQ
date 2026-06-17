@@ -528,7 +528,11 @@ begin
 
   (v_league, v_rs, 'The Coupe de la Ligue (League Cup) was abolished after which season?',
    '["2018–19","2019–20","2020–21","2021–22"]', 1, 'medium',
-   'The Coupe de la Ligue was abolished after the 2019–20 season, following a LFP decision to simplify the French football calendar. PSG had won it a record 9 consecutive times before it was discontinued.');
+   'The Coupe de la Ligue was abolished after the 2019–20 season, following a LFP decision to simplify the French football calendar. PSG had won it a record 9 consecutive times before it was discontinued.'),
+
+  (v_league, v_rs, 'France''s football financial watchdog, the DNCG, has which unique power compared to most other European football regulators?',
+   '["It can impose fines only","It can force clubs to play behind closed doors","It can impose wage caps, squad restrictions, or even relegate clubs with unsustainable finances","It is advisory only with no enforcement power"]', 2, 'medium',
+   'The DNCG (Direction Nationale du Contrôle de Gestion) is the French football financial supervisory body with wide-ranging enforcement powers — including wage caps, banning player registrations, and forcing administrative relegation on clubs with unmanageable debts. This makes French football''s financial governance among the strictest in Europe.');
 
   -- ============================================================
   -- MANAGERS (30)
@@ -649,7 +653,11 @@ begin
 
   (v_league, v_mg, 'Which French World Cup winner managed a Ligue 1 club and then the France under-21 team?',
    '["Thierry Henry","Patrick Vieira","David Trezeguet","Mikael Silvestre"]', 1, 'medium',
-   'Patrick Vieira managed Nice from 2018 to 2021, qualifying them for European football. He then managed Crystal Palace in the Premier League (2021–23) before returning to France to manage Strasbourg from 2024.');
+   'Patrick Vieira managed Nice from 2018 to 2021, qualifying them for European football. He then managed Crystal Palace in the Premier League (2021–23) before returning to France to manage Strasbourg from 2024.'),
+
+  (v_league, v_mg, 'Julien Stéphan guided which Ligue 1 club to their first major trophy in over 40 years, winning the Coupe de France in 2019?',
+   '["Bordeaux","Lyon","Stade Rennais","Lens"]', 2, 'medium',
+   'Julien Stéphan managed Stade Rennais to victory in the 2019 Coupe de France, beating PSG 6–5 on penalties after a 2–2 draw. It was Rennes'' first major trophy since 1971. Stéphan achieved this remarkable result in his first full season as head coach.');
 
   -- ============================================================
   -- TRANSFERS (30)
@@ -766,7 +774,15 @@ begin
 
   (v_league, v_tr, 'Which South American forward was PSG''s most expensive signing before Neymar?',
    '["Thiago Motta","Javier Pastore","David Beckham","Edinson Cavani"]', 1, 'hard',
-   'Javier Pastore joined PSG from Palermo for €42 million in 2011 — PSG''s first major signing of the QSI era and their most expensive purchase before Neymar''s arrival in 2017.');
+   'Javier Pastore joined PSG from Palermo for €42 million in 2011 — PSG''s first major signing of the QSI era and their most expensive purchase before Neymar''s arrival in 2017.'),
+
+  (v_league, v_tr, 'Memphis Depay joined Olympique Lyonnais from which club in January 2017, reviving his career in Ligue 1?',
+   '["Everton","Barcelona","Manchester United","Atletico de Madrid"]', 2, 'medium',
+   'Memphis Depay joined Olympique Lyonnais from Manchester United in January 2017 for approximately €16 million after struggling to establish himself in England. He thrived at Lyon, scoring 76 goals in 178 appearances before joining FC Barcelona in 2021.'),
+
+  (v_league, v_tr, 'Tanguy Ndombele joined Tottenham Hotspur from which Ligue 1 club in 2019 for approximately £55 million — then a Tottenham club record?',
+   '["PSG","Monaco","Lyon","Marseille"]', 2, 'medium',
+   'Tanguy Ndombele joined Tottenham Hotspur from Olympique Lyonnais in July 2019 for approximately £55 million, making him the most expensive signing in Spurs'' history at the time. Despite flashes of brilliance, he struggled with form and fitness in England and eventually returned to France.');
 
   -- ============================================================
   -- STADIUM & CULTURE (30)
@@ -883,7 +899,15 @@ begin
 
   (v_league, v_sc, 'Lens'' Stade Bollaert-Delelis was specifically renovated for which major tournament?',
    '["1998 World Cup","Euro 2000","Euro 2016","2024 Olympics"]', 2, 'medium',
-   'The Stade Bollaert-Delelis in Lens was renovated for UEFA Euro 2016, which France hosted. The ground dates from 1933 and reflects Lens''s industrial heritage, with fans packed tightly around a compact pitch.');
+   'The Stade Bollaert-Delelis in Lens was renovated for UEFA Euro 2016, which France hosted. The ground dates from 1933 and reflects Lens''s industrial heritage, with fans packed tightly around a compact pitch.'),
+
+  (v_league, v_sc, 'Lyon''s modern stadium, opened in January 2016, was later renamed after a sponsorship deal. What is it currently called?',
+   '["Stade de Gerland","Parc Olympique Lyonnais","Groupama Stadium","Stade des Lumières"]', 2, 'medium',
+   'Olympique Lyonnais''s stadium opened in January 2016 as the Parc Olympique Lyonnais and was renamed the Groupama Stadium in 2019 after a naming rights deal with the French insurer. It replaced the old Stade de Gerland and has a capacity of 59,186, hosting Euro 2016 matches.'),
+
+  (v_league, v_sc, 'AS Saint-Étienne''s Stade Geoffroy-Guichard is nicknamed what, reflecting the intense atmosphere generated by their passionate supporters?',
+   '["La Forteresse","Le Chaudron","La Casserole","Le Vert"]', 1, 'medium',
+   'The Stade Geoffroy-Guichard in Saint-Étienne is nicknamed "Le Chaudron" (The Cauldron) for its enclosed, intense atmosphere. The stadium hosted Euro 2016 matches and the Stéphanois supporters — known as the "Verts" — create one of Ligue 1''s most intimidating home environments.');
 
 end;
 $$;

@@ -903,7 +903,11 @@ begin
 
   (v_league, v_sc, 'The atmosphere at the Bernabéu has been described as "the most hostile in the world" for visiting teams. What chant do Real Madrid fans use to intimidate opponents?',
    '["¡Hala Madrid!","¡Eso, eso, eso!","¡Campeones!","The noise rather than a specific chant"]', 0, 'medium',
-   '"¡Hala Madrid!" (Come on Madrid!) is Real Madrid''s most famous rallying call. It is used both as a chant of encouragement and a statement of the club''s global identity and ambition.');
+   '"¡Hala Madrid!" (Come on Madrid!) is Real Madrid''s most famous rallying call. It is used both as a chant of encouragement and a statement of the club''s global identity and ambition.'),
+
+  (v_league, v_sc, 'Villarreal CF''s stadium is popularly known as "El Madrigal" but was officially renamed in 2018. What is its current official name?',
+   '["Campo El Madrigal","Estadio Roig Arena","Estadio de la Cerámica","Estadio del Submarino"]', 2, 'medium',
+   'Villarreal CF''s ground was officially renamed Estadio de la Cerámica in 2018, honouring the ceramics tile industry that is the economic backbone of the Castellón region. The stadium opened in 1923 and has a capacity of approximately 23,500, making it one of La Liga''s more compact but atmospheric venues.');
 
 end;
 $$;
