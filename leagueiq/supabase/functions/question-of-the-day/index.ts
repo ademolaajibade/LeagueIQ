@@ -37,10 +37,9 @@ Deno.serve(async (req) => {
       questionId = allQuestions[Math.floor(Math.random() * allQuestions.length)].id
     }
 
-    // Fetch question without correct_answer
     const { data: question, error: qErr } = await db
       .from('questions')
-      .select('id, league_id, category_id, question, options, difficulty, fact, is_active, created_at')
+      .select('id, league_id, category_id, question, options, correct_answer, difficulty, fact, is_active, created_at')
       .eq('id', questionId)
       .single()
 

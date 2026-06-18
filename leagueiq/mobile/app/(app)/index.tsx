@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import {
   View, Text, ScrollView, StyleSheet,
-  TouchableOpacity, ActivityIndicator, RefreshControl,
+  TouchableOpacity, ActivityIndicator, RefreshControl, Pressable,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
@@ -22,6 +22,7 @@ export default function HomeScreen() {
   const [leagues, setLeagues] = useState<League[]>([])
   const [mastery, setMastery] = useState<LeagueMastery[]>([])
   const [qotd, setQotd] = useState<Question | null>(null)
+  const [qotdPick, setQotdPick] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
 
@@ -106,14 +107,41 @@ export default function HomeScreen() {
               </Text>
               <Text style={styles.qotdText}>{qotd.question}</Text>
               <View style={styles.qotdAnswers}>
-                {qotd.options.map((opt, i) => (
-                  <View key={i} style={styles.qotdOption}>
-                    <Text style={styles.qotdOptionText}>
-                      {String.fromCharCode(65 + i)}. {opt}
-                    </Text>
-                  </View>
-                ))}
+                {qotd.options.map((opt, i) => {
+                  const picked    = qotdPick !== null
+                  const isCorrect = i === qotd.correct_answer
+                  const isPicked  = i === qotdPick
+                  let optStyle    = styles.qotdOption
+                  let textStyle   = styles.qotdOptionText
+                  if (picked && isCorrect)        { optStyle = { ...styles.qotdOption, ...styles.qotdCorrect }; textStyle = { ...styles.qotdOptionText, color: COLORS.success } }
+                  else if (picked && isPicked)    { optStyle = { ...styles.qotdOption, ...styles.qotdWrong };   textStyle = { ...styles.qotdOptionText, color: COLORS.error } }
+                  return (
+                    <Pressable
+                      key={i}
+                      onPress={() => { if (qotdPick === null) setQotdPick(i) }}
+                      style={optStyle}
+                    >
+                      <Text style={styles.qotdLabel}>{String.fromCharCode(65 + i)}</Text>
+                      <Text style={textStyle}>{opt}</Text>
+                    </Pressable>
+                  )
+                })}
               </View>
+              {qotdPick !== null && qotd.fact && (
+                <View style={styles.qotdFact}>
+                  <Text style={styles.qotdFactLabel}>Did You Know?</Text>
+                  <Text style={styles.qotdFactText}>{qotd.fact}</Text>
+                </View>
+              )}
+              {qotdPick !== null && (
+                <TouchableOpacity
+                  style={styles.qotdPlayBtn}
+                  onPress={() => router.push('/(app)/play')}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.qotdPlayText}>Play More →</Text>
+                </TouchableOpacity>
+              )}
             </View>
           </View>
         )}
@@ -216,12 +244,48 @@ const styles = StyleSheet.create({
   },
   qotdAnswers: { gap: 8 },
   qotdOption: {
+    flexDirection:   'row',
+    alignItems:      'center',
+    gap:             10,
     backgroundColor: COLORS.surfaceAlt,
     borderRadius:    10,
-    paddingHorizontal: 14,
+    paddingHorizontal: 12,
     paddingVertical:   10,
+    borderWidth:     1,
+    borderColor:     'transparent',
   },
-  qotdOptionText: { color: COLORS.textSecondary, fontSize: 14 },
+  qotdCorrect: { backgroundColor: 'rgba(34,197,94,0.12)', borderColor: COLORS.success },
+  qotdWrong:   { backgroundColor: 'rgba(239,68,68,0.12)', borderColor: COLORS.error },
+  qotdLabel: {
+    width:        24,
+    height:       24,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    textAlign:    'center',
+    lineHeight:   24,
+    fontSize:     12,
+    fontWeight:   '700',
+    color:        COLORS.textMuted,
+  },
+  qotdOptionText: { color: COLORS.textSecondary, fontSize: 14, flex: 1 },
+  qotdFact: {
+    marginTop:       12,
+    padding:         12,
+    borderRadius:    10,
+    backgroundColor: COLORS.surfaceAlt,
+    borderWidth:     1,
+    borderColor:     'rgba(245,197,24,0.2)',
+  },
+  qotdFactLabel: { color: COLORS.gold, fontSize: 11, fontWeight: '700', letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 4 },
+  qotdFactText:  { color: COLORS.textSecondary, fontSize: 13, lineHeight: 19 },
+  qotdPlayBtn: {
+    marginTop:        12,
+    backgroundColor:  COLORS.gold,
+    borderRadius:     10,
+    paddingVertical:  12,
+    alignItems:       'center',
+  },
+  qotdPlayText: { color: '#000', fontSize: 14, fontWeight: '700' },
 
   quickRow: { flexDirection: 'row', gap: 10 },
   quickBtn: {

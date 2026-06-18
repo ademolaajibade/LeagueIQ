@@ -26,6 +26,7 @@ export default function LeaderboardScreen() {
   const [period, setPeriod] = useState<Period>('all_time')
   const [data, setData] = useState<LeaderboardResponse | null>(null)
   const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState<string | null>(null)
 
   useEffect(() => {
     fetchLeagues().then(setLeagues)
@@ -34,10 +35,11 @@ export default function LeaderboardScreen() {
   useEffect(() => {
     if (!profile) return
     setLoading(true)
+    setFetchError(null)
     const leagueId = leagueIdx >= 0 ? leagues[leagueIdx]?.id : undefined
     getLeaderboard({ league_id: leagueId, period, limit: 50 })
       .then(setData)
-      .catch(console.error)
+      .catch((e: Error) => setFetchError(e.message))
       .finally(() => setLoading(false))
   }, [leagueIdx, period, leagues])
 
@@ -140,9 +142,11 @@ export default function LeaderboardScreen() {
             )
           })}
 
-          {entries.length === 0 && (
+          {fetchError ? (
+            <Text style={styles.empty}>Could not load leaderboard.{'\n'}{fetchError}</Text>
+          ) : entries.length === 0 ? (
             <Text style={styles.empty}>No entries yet. Be the first!</Text>
-          )}
+          ) : null}
         </ScrollView>
       )}
     </SafeAreaView>
