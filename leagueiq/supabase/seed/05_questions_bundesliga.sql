@@ -810,7 +810,7 @@ begin
    'The Bundesliga was founded in 1963, while England''s Football League began in 1888 — a difference of 75 years. Germany resisted a national professional league for decades, preferring regional amateur competitions.'),
 
   (v_league, v_sc, 'What is the name given to the fan culture of "ultras" support in German football?',
-   '["Fanatics","Ultras","Supporters' Clubs","Fanblock"]', 1, 'easy',
+   '["Fanatics","Ultras","Supporters'' Clubs","Fanblock"]', 1, 'easy',
    '"Ultras" groups exist throughout German football, maintaining highly organised, choreographed support with drums, flags, and tifo displays. Unlike England, German ultras groups often have political affiliations and take strong stances on football governance.'),
 
   (v_league, v_sc, 'The Bundesliga''s TV rights are sold in which way, and how does this affect smaller clubs?',

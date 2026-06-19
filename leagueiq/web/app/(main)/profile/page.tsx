@@ -140,7 +140,7 @@ export default function ProfilePage() {
             { label: 'Games',    value: stats.games_played },
             { label: 'Accuracy', value: `${stats.accuracy}%` },
             { label: 'Streak',   value: stats.best_streak },
-            { label: 'XP',       value: stats.xp_total.toLocaleString() },
+            { label: 'XP',       value: (stats.xp_total ?? 0).toLocaleString() },
           ].map((s) => (
             <div
               key={s.label}

@@ -89,9 +89,17 @@ Deno.serve(async (req) => {
       .reverse()
       .map((s) => ({ date: s.completed_at, xp_earned: s.xp_earned }))
 
+    const sessionList = sessions ?? []
+    const bestStreak = sessionList.length > 0
+      ? Math.max(...sessionList.map((s) => s.score))
+      : 0
+
     return respond({
       profile,
-      games_played: (sessions ?? []).length,
+      games_played: sessionList.length,
+      accuracy: overallAccuracy,
+      best_streak: bestStreak,
+      xp_total: profile.xp,
       overall_accuracy: overallAccuracy,
       league_stats: leagueStats,
       mastery: mastery ?? [],
