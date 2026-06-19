@@ -19,6 +19,7 @@ export default function QuizPage() {
   const [fact,         setFact]         = useState<string | null>(null)
   const [showFact,     setShowFact]     = useState(false)
   const [submitting,   setSubmitting]   = useState(false)
+  const [answered,     setAnswered]     = useState(false)
   const [timeLeft,     setTimeLeft]     = useState(0)
   const [timerRunning, setTimerRunning] = useState(false)
   const [correctCount, setCorrectCount] = useState(0)
@@ -29,7 +30,7 @@ export default function QuizPage() {
 
   const accentColor  = LEAGUE_COLORS[pending?.league?.slug ?? ''] ?? COLORS.gold
   const isSpeedRound = session?.mode === 'speed_round'
-  const totalMs      = isSpeedRound ? 8000 : 15000
+  const totalMs      = isSpeedRound ? 18000 : 25000
   const question     = questions[currentIndex]
 
   // Redirect if store is empty
@@ -42,6 +43,7 @@ export default function QuizPage() {
     if (!question) return
     setTimeLeft(totalMs)
     setTimerRunning(true)
+    setAnswered(false)
     questionStartMs.current = Date.now()
 
     intervalRef.current = setInterval(() => {
@@ -91,31 +93,32 @@ export default function QuizPage() {
       setAnswerStates(newStates)
 
       if (result.fact) { setFact(result.fact); setShowFact(true) }
-
-      const delay = result.fact ? 2800 : 1400
-      timeoutRef.current = setTimeout(async () => {
-        setShowFact(false)
-        setFact(null)
-        setAnswerStates(['idle', 'idle', 'idle', 'idle'])
-
-        const isLast = currentIndex === questions.length - 1
-        if (isLast) {
-          try {
-            const endResult = await endSession(session.id)
-            setEndResult(endResult)
-          } catch { /* still navigate */ }
-          router.replace('/results')
-        } else {
-          nextQuestion()
-          setSubmitting(false)
-        }
-      }, delay)
+      setAnswered(true)
 
     } catch {
       setSubmitting(false)
       setTimerRunning(true)
     }
   }, [submitting, session, question, currentIndex, questions.length])
+
+  const handleNext = useCallback(async () => {
+    setShowFact(false)
+    setFact(null)
+    setAnswerStates(['idle', 'idle', 'idle', 'idle'])
+    setAnswered(false)
+
+    const isLast = currentIndex === questions.length - 1
+    if (isLast) {
+      try {
+        const endResult = await endSession(session!.id)
+        setEndResult(endResult)
+      } catch { /* still navigate */ }
+      router.replace('/results')
+    } else {
+      nextQuestion()
+      setSubmitting(false)
+    }
+  }, [currentIndex, questions.length, session])
 
   useEffect(() => () => {
     clearInterval(intervalRef.current!)
@@ -197,6 +200,17 @@ export default function QuizPage() {
           </p>
           <p className="text-sm leading-relaxed" style={{ color: COLORS.textSecondary }}>{fact}</p>
         </div>
+      )}
+
+      {/* Next question button */}
+      {answered && (
+        <button
+          onClick={handleNext}
+          className="w-full rounded-2xl p-4 font-bold text-base transition-all active:scale-[0.98]"
+          style={{ background: accentColor, color: '#000' }}
+        >
+          {currentIndex === questions.length - 1 ? 'See Results' : 'Next Question'}
+        </button>
       )}
 
     </div>
