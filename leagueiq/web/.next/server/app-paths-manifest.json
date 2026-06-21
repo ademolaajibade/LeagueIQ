@@ -1,6 +1,9 @@
 {
-  "/(main)/quiz/page": "app/(main)/quiz/page.js",
-  "/(main)/profile/page": "app/(main)/profile/page.js",
+  "/(auth)/login/page": "app/(auth)/login/page.js",
+  "/(main)/play/page": "app/(main)/play/page.js",
   "/(main)/home/page": "app/(main)/home/page.js",
-  "/(main)/play/page": "app/(main)/play/page.js"
+  "/(main)/results/page": "app/(main)/results/page.js",
+  "/(main)/leaderboard/page": "app/(main)/leaderboard/page.js",
+  "/(main)/profile/page": "app/(main)/profile/page.js",
+  "/(main)/quiz/page": "app/(main)/quiz/page.js"
 }
