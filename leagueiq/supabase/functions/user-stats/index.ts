@@ -46,7 +46,7 @@ Deno.serve(async (req) => {
     // Accuracy per session
     const totalAnswered = allAnswers.length
     const totalCorrect = allAnswers.filter((a) => a.is_correct).length
-    const overallAccuracy = totalAnswered > 0 ? Math.round((totalCorrect / totalAnswered) * 100) : 0
+    const overallAccuracy = totalAnswered > 0 ? (Math.round((totalCorrect / totalAnswered) * 100) || 0) : 0
 
     // Games played + best score per league
     const leagueStats: Record<string, { games_played: number; total_correct: number; total_answered: number; best_score: number }> = {}

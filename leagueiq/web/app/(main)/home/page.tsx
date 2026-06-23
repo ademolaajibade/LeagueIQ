@@ -93,7 +93,7 @@ export default function HomePage() {
 
   const statCells = [
     { label: 'Rank',     value: rank        ? `#${rank}`                        : '—' },
-    { label: 'Accuracy', value: stats       ? `${Math.round(stats.accuracy)}%`  : '—' },
+    { label: 'Accuracy', value: (stats && Number.isFinite(stats.accuracy)) ? `${Math.round(stats.accuracy)}%` : '—' },
     { label: 'Games',    value: stats       ? stats.games_played.toLocaleString() : '—' },
   ]
 
