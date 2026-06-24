@@ -12,7 +12,6 @@ Deno.serve(async (req) => {
   if (authErr || !user) return unauthorized()
 
   try {
-    // Fetch profile
     const { data: profile, error: profileErr } = await db
       .from('profiles')
       .select('*')
@@ -21,7 +20,6 @@ Deno.serve(async (req) => {
 
     if (profileErr || !profile) return serverError('Failed to fetch profile')
 
-    // Fetch completed game sessions
     const { data: sessions } = await db
       .from('game_sessions')
       .select('id, league_id, category_id, mode, score, xp_earned, total_questions, completed_at')
@@ -30,50 +28,40 @@ Deno.serve(async (req) => {
       .order('completed_at', { ascending: false })
       .limit(200)
 
-    // Fetch session answers for accuracy
-    const sessionIds = (sessions ?? []).map((s) => s.id)
-    let allAnswers: Array<{ session_id: string; is_correct: boolean; question_id: string }> = []
+    const sessionList = sessions ?? []
+    const sessionIds  = sessionList.map((s) => s.id)
 
+    // Accuracy via server-side COUNT — avoids row-limit truncation
+    let overallAccuracy = 0
     if (sessionIds.length > 0) {
-      const { data: answers } = await db
-        .from('session_answers')
-        .select('session_id, is_correct, question_id')
-        .in('session_id', sessionIds)
-
-      allAnswers = answers ?? []
+      const [{ count: totalAnswered }, { count: totalCorrect }] = await Promise.all([
+        db.from('session_answers')
+          .select('*', { count: 'exact', head: true })
+          .in('session_id', sessionIds),
+        db.from('session_answers')
+          .select('*', { count: 'exact', head: true })
+          .in('session_id', sessionIds)
+          .eq('is_correct', true),
+      ])
+      overallAccuracy = (totalAnswered ?? 0) > 0
+        ? Math.round(((totalCorrect ?? 0) / (totalAnswered ?? 0)) * 100)
+        : 0
     }
 
-    // Accuracy per session
-    const totalAnswered = allAnswers.length
-    const totalCorrect = allAnswers.filter((a) => a.is_correct).length
-    const overallAccuracy = totalAnswered > 0 ? (Math.round((totalCorrect / totalAnswered) * 100) || 0) : 0
-
-    // Games played + best score per league
-    const leagueStats: Record<string, { games_played: number; total_correct: number; total_answered: number; best_score: number }> = {}
-    for (const session of sessions ?? []) {
-      if (!leagueStats[session.league_id]) {
-        leagueStats[session.league_id] = { games_played: 0, total_correct: 0, total_answered: 0, best_score: 0 }
+    // Per-league stats derived from session data — no extra query needed
+    const leagueStats: Record<string, { games_played: number; accuracy: number; games: number }> = {}
+    for (const s of sessionList) {
+      if (!leagueStats[s.league_id]) {
+        leagueStats[s.league_id] = { games_played: 0, accuracy: 0, games: 0 }
       }
-      leagueStats[session.league_id].games_played++
-      if (session.score > leagueStats[session.league_id].best_score) {
-        leagueStats[session.league_id].best_score = session.score
-      }
-    }
-    for (const answer of allAnswers) {
-      const session = (sessions ?? []).find((s) => s.id === answer.session_id)
-      if (!session) continue
-      if (!leagueStats[session.league_id]) continue
-      leagueStats[session.league_id].total_answered++
-      if (answer.is_correct) leagueStats[session.league_id].total_correct++
+      leagueStats[s.league_id].games_played++
     }
 
-    // League mastery
     const { data: mastery } = await db
       .from('league_mastery')
       .select('*')
       .eq('user_id', user.id)
 
-    // Survival best score
     const { data: survivalBest } = await db
       .from('survival_sessions')
       .select('questions_survived, league_id')
@@ -83,28 +71,26 @@ Deno.serve(async (req) => {
       .limit(1)
       .maybeSingle()
 
-    // XP timeline (last 30 sessions)
-    const xpTimeline = (sessions ?? [])
+    const xpTimeline = sessionList
       .slice(0, 30)
       .reverse()
       .map((s) => ({ date: s.completed_at, xp_earned: s.xp_earned }))
 
-    const sessionList = sessions ?? []
     const bestStreak = sessionList.length > 0
       ? Math.max(...sessionList.map((s) => s.score))
       : 0
 
     return respond({
       profile,
-      games_played: sessionList.length,
-      accuracy: overallAccuracy,
-      best_streak: bestStreak,
-      xp_total: profile.xp,
+      games_played:     sessionList.length,
+      accuracy:         overallAccuracy,
+      best_streak:      bestStreak,
+      xp_total:         profile.xp,
       overall_accuracy: overallAccuracy,
-      league_stats: leagueStats,
-      mastery: mastery ?? [],
-      survival_best: survivalBest?.questions_survived ?? 0,
-      xp_timeline: xpTimeline,
+      league_stats:     leagueStats,
+      mastery:          mastery ?? [],
+      survival_best:    survivalBest?.questions_survived ?? 0,
+      xp_timeline:      xpTimeline,
     })
   } catch (e) {
     return serverError(e.message)
