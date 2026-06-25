@@ -78,7 +78,7 @@ export default function HomeScreen() {
         <View style={styles.header}>
           <View>
             <Text style={styles.greeting}>Welcome back,</Text>
-            <Text style={styles.username}>@{profile?.username}</Text>
+            <Text style={styles.username}>{profile?.username}</Text>
           </View>
           <View style={styles.headerRight}>
             <StreakBadge streak={profile?.streak ?? 0} />
