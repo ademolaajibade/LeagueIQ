@@ -15,7 +15,7 @@ Deno.serve(async (req) => {
     const body = await req.json()
     const { session_id, question_id, selected_answer, time_taken_ms } = body
 
-    if (!session_id || !question_id || selected_answer == null || time_taken_ms == null) {
+    if (!session_id || !question_id || selected_answer === undefined || time_taken_ms == null) {
       return badRequest('session_id, question_id, selected_answer, and time_taken_ms are required')
     }
 
@@ -44,9 +44,10 @@ Deno.serve(async (req) => {
     const seenIds: string[] = (session.question_ids_seen as string[]) ?? []
 
     if (isCorrect) {
-      // Increment survived count, add to seen list
+      // Increment survived count; newSeenIds already contains question_id from start-survival,
+      // so only add it if it's not already tracked to avoid duplicates.
       const newSurvivedCount = session.questions_survived + 1
-      const newSeenIds = [...seenIds, question_id]
+      const newSeenIds = seenIds.includes(question_id) ? seenIds : [...seenIds, question_id]
 
       await db
         .from('survival_sessions')
@@ -56,16 +57,20 @@ Deno.serve(async (req) => {
         })
         .eq('id', session_id)
 
-      // Pick next question (exclude already seen)
-      const { data: remaining } = await db
+      // Pick next question (exclude already seen), filtering in JS to avoid PostgREST UUID filter issues
+      const { data: allActive, error: remainingErr } = await db
         .from('questions')
         .select('id, league_id, category_id, question, options, difficulty, fact, is_active, created_at')
         .eq('league_id', session.league_id)
         .eq('is_active', true)
-        .not('id', 'in', `(${newSeenIds.map((id) => `'${id}'`).join(',')})`)
-        .limit(100)
+        .limit(200)
 
-      const nextQuestion = remaining && remaining.length > 0
+      if (remainingErr) return serverError(`Failed to fetch next question: ${remainingErr.message}`)
+
+      const seenSet = new Set(newSeenIds)
+      const remaining = (allActive ?? []).filter((q) => !seenSet.has(q.id))
+
+      const nextQuestion = remaining.length > 0
         ? remaining[Math.floor(Math.random() * remaining.length)]
         : null
 

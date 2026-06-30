@@ -40,7 +40,7 @@ export default function RegisterScreen() {
       email: email.trim(),
       password,
     });
-    console.log("Sign Up Result:", { error });
+    // console.log("Sign Up Result:", { error });
     setLoading(false);
 
     if (error) {
@@ -61,7 +61,7 @@ export default function RegisterScreen() {
         <Text style={styles.title}>Check your inbox</Text>
         <Text style={styles.sentBody}>
           We sent a confirmation link to{"\n"}
-          <Text style={{ color: "#00e5a0", fontWeight: "600" }}>{email}</Text>
+          <Text style={{ color: "#F5C518", fontWeight: "600" }}>{email}</Text>
         </Text>
         <Text style={styles.sentSub}>
           Click the link to verify your account, then come back and sign in.
@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
     borderColor: "#2a2a2a",
   },
   btn: {
-    backgroundColor: "#00e5a0",
+    backgroundColor: "#F5C518",
     borderRadius: 12,
     padding: 16,
     alignItems: "center",
@@ -181,7 +181,7 @@ const styles = StyleSheet.create({
     marginTop: 28,
   },
   footerText: { color: "#555", fontSize: 14 },
-  link: { color: "#00e5a0", fontWeight: "600", fontSize: 14 },
+  link: { color: "#F5C518", fontWeight: "600", fontSize: 14 },
   sentBody: {
     color: "#aaa",
     fontSize: 16,

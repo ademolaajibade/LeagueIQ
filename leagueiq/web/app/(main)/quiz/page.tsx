@@ -7,6 +7,7 @@ import { submitAnswer, endSession } from '@/lib/api'
 import { useGameStore } from '@/store/gameStore'
 
 type AnswerState = 'idle' | 'correct' | 'wrong'
+type QuitState   = 'idle' | 'confirm' | 'quitting'
 
 export default function QuizPage() {
   const router = useRouter()
@@ -23,6 +24,7 @@ export default function QuizPage() {
   const [timeLeft,     setTimeLeft]     = useState(0)
   const [timerRunning, setTimerRunning] = useState(false)
   const [correctCount, setCorrectCount] = useState(0)
+  const [quitState,    setQuitState]    = useState<QuitState>('idle')
 
   const questionStartMs = useRef(Date.now())
   const timeoutRef      = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -30,7 +32,7 @@ export default function QuizPage() {
 
   const accentColor  = LEAGUE_COLORS[pending?.league?.slug ?? ''] ?? COLORS.gold
   const isSpeedRound = session?.mode === 'speed_round'
-  const totalMs      = isSpeedRound ? 18000 : 25000
+  const totalMs      = isSpeedRound ? 8000 : 15000
   const question     = questions[currentIndex]
 
   // Redirect if store is empty
@@ -120,6 +122,16 @@ export default function QuizPage() {
     }
   }, [currentIndex, questions.length, session])
 
+  const handleQuit = useCallback(async () => {
+    setQuitState('quitting')
+    clearInterval(intervalRef.current!)
+    try {
+      const endResult = await endSession(session!.id)
+      setEndResult(endResult)
+    } catch { /* still navigate */ }
+    router.replace('/results')
+  }, [session])
+
   useEffect(() => () => {
     clearInterval(intervalRef.current!)
     if (timeoutRef.current) clearTimeout(timeoutRef.current)
@@ -133,6 +145,35 @@ export default function QuizPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-4 flex flex-col gap-4">
 
+      {/* Quit confirmation modal */}
+      {quitState === 'confirm' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-6" style={{ background: 'rgba(8,11,20,0.88)' }}>
+          <div
+            className="w-full max-w-sm rounded-3xl p-7 flex flex-col gap-4 border"
+            style={{ background: COLORS.surface, borderColor: COLORS.border }}
+          >
+            <h2 className="text-xl font-black text-white">Quit this game?</h2>
+            <p className="text-sm leading-relaxed" style={{ color: COLORS.textSecondary }}>
+              Your progress so far will be saved and you'll see your results.
+            </p>
+            <button
+              onClick={handleQuit}
+              className="w-full rounded-2xl py-3.5 font-bold text-white"
+              style={{ background: COLORS.error }}
+            >
+              Yes, quit
+            </button>
+            <button
+              onClick={() => setQuitState('idle')}
+              className="w-full rounded-2xl py-3.5 font-semibold border"
+              style={{ color: COLORS.textSecondary, borderColor: COLORS.border }}
+            >
+              Keep playing
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Timer bar */}
       <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
         <div
@@ -141,10 +182,19 @@ export default function QuizPage() {
         />
       </div>
 
-      {/* Progress + score */}
+      {/* Progress + score + quit */}
       <div className="flex justify-between items-center text-sm">
         <span style={{ color: COLORS.textMuted }}>{currentIndex + 1} / {questions.length}</span>
-        <span className="font-bold" style={{ color: accentColor }}>{correctCount} correct</span>
+        <div className="flex items-center gap-3">
+          <span className="font-bold" style={{ color: accentColor }}>{correctCount} correct</span>
+          <button
+            onClick={() => setQuitState('confirm')}
+            className="text-xs font-semibold px-2.5 py-1 rounded-lg border transition-opacity hover:opacity-70"
+            style={{ color: COLORS.textMuted, borderColor: COLORS.border }}
+          >
+            Quit
+          </button>
+        </div>
       </div>
 
       {/* Question */}

@@ -8,6 +8,7 @@ const links = [
   { href: '/home',        label: 'Home',        icon: '🏠' },
   { href: '/play',        label: 'Play',         icon: '⚡' },
   { href: '/leaderboard', label: 'Leaderboard',  icon: '🏆' },
+  { href: '/tournaments', label: 'Tournaments',  icon: '🥇' },
   { href: '/profile',     label: 'Profile',      icon: '👤' },
 ]
 

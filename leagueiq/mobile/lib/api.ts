@@ -97,7 +97,10 @@ export const submitTournamentScore = (tournamentId: string, score: number) =>
 // ── Content ───────────────────────────────────────────────────
 
 export const getQuestionOfTheDay = () =>
-  invoke<{ question: import('../types').Question }>('question-of-the-day')
+  invoke<{ question: import('../types').Question; user_pick: number | null }>('question-of-the-day')
+
+export const submitQotdAnswer = (question_id: string, picked: number) =>
+  invoke<{ ok: boolean }>('submit-qotd-answer', { question_id, picked })
 
 export const getDailyChallenge = (leagueId: string) =>
   invoke<StartSessionResponse>('daily-challenge', { league_id: leagueId })

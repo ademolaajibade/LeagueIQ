@@ -35,10 +35,10 @@ Deno.serve(async (req) => {
         .eq('is_active', true)
         .limit(300)
 
-      if (!allQuestions || allQuestions.length < 10) return serverError('Not enough questions')
+      if (!allQuestions || allQuestions.length < 5) return serverError('Not enough questions for daily challenge')
 
       const shuffled = allQuestions.sort(() => Math.random() - 0.5)
-      const questionIds = shuffled.slice(0, 10).map((q) => q.id)
+      const questionIds = shuffled.slice(0, Math.min(10, allQuestions.length)).map((q) => q.id)
 
       const { data: newChallenge, error: insertErr } = await db
         .from('daily_challenges')

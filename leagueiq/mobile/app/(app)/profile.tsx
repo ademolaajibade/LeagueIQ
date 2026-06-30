@@ -10,6 +10,7 @@ import LevelBadge from '../../components/LevelBadge'
 import StreakBadge from '../../components/StreakBadge'
 import { COLORS, LEAGUE_NAMES, LEAGUE_COLORS } from '../../lib/colors'
 import { getUserStats, fetchLeagues, fetchLeagueMastery, createPayment, verifyPayment, activateXpBooster } from '../../lib/api'
+import { supabase } from '../../lib/supabase'
 import type { League, LeagueMastery } from '../../types'
 import { openBrowserAsync } from 'expo-web-browser'
 
@@ -53,13 +54,68 @@ export default function ProfileScreen() {
     try {
       const { payment_url, reference } = await createPayment({ plan })
       await openBrowserAsync(payment_url)
-      await verifyPayment({ reference })
+
+      // Paystack may take a few seconds to mark the transaction 'success' after
+      // the browser closes, so retry verify-payment with backoff before giving up.
+      const DELAYS_MS = [0, 2000, 4000, 4000, 4000]
+      let verified = false
+      for (const delay of DELAYS_MS) {
+        if (delay > 0) await new Promise<void>(r => setTimeout(r, delay))
+        try {
+          const result = await verifyPayment({ reference })
+          if (result.verified) { verified = true; break }
+        } catch { /* txn not yet settled — keep retrying */ }
+      }
+
       await refreshProfile()
-      Alert.alert('Success', 'Premium activated!')
+      if (verified) {
+        Alert.alert('Success', 'Premium activated!')
+      } else {
+        Alert.alert(
+          'Payment Received',
+          "We're confirming your payment. Your Premium access will be activated shortly.",
+        )
+      }
     } catch (e: unknown) {
       Alert.alert('Error', e instanceof Error ? e.message : 'Payment failed')
     } finally {
       setUpgrading(false)
+    }
+  }
+
+  function confirmDeleteAccount() {
+    Alert.alert(
+      'Delete Account',
+      'This permanently deletes your account and all your data. This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Delete', style: 'destructive', onPress: deleteAccount },
+      ],
+    )
+  }
+
+  async function deleteAccount() {
+    try {
+      const { data: { session: s } } = await supabase.auth.getSession()
+      if (!s?.access_token) return
+      const res = await fetch(
+        `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/delete-account`,
+        {
+          method:  'POST',
+          headers: {
+            Authorization:  `Bearer ${s.access_token}`,
+            'Content-Type': 'application/json',
+          },
+        },
+      )
+      if (!res.ok) {
+        const body = await res.json()
+        Alert.alert('Error', body?.error ?? 'Could not delete account')
+        return
+      }
+      await supabase.auth.signOut()
+    } catch (e: unknown) {
+      Alert.alert('Error', e instanceof Error ? e.message : 'Could not delete account')
     }
   }
 
@@ -88,8 +144,6 @@ export default function ProfileScreen() {
   function getMastery(leagueId: string) {
     return mastery.find((m) => m.league_id === leagueId)
   }
-
-  const MASTERY_ORDER = ['Rookie', 'Fan', 'Expert', 'Ultras👑']
 
   if (!profile) return null
 
@@ -224,6 +278,22 @@ export default function ProfileScreen() {
         {/* Sign out */}
         <TouchableOpacity style={styles.signOutBtn} onPress={signOut} activeOpacity={0.7}>
           <Text style={styles.signOutText}>Sign Out</Text>
+        </TouchableOpacity>
+
+        {/* Legal links */}
+        <View style={styles.legalRow}>
+          <TouchableOpacity onPress={() => openBrowserAsync('https://leagueiq.app/privacy')}>
+            <Text style={styles.legalLink}>Privacy Policy</Text>
+          </TouchableOpacity>
+          <Text style={styles.legalDot}>·</Text>
+          <TouchableOpacity onPress={() => openBrowserAsync('https://leagueiq.app/terms')}>
+            <Text style={styles.legalLink}>Terms of Service</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Delete account */}
+        <TouchableOpacity style={styles.deleteBtn} onPress={confirmDeleteAccount} activeOpacity={0.7}>
+          <Text style={styles.deleteText}>Delete Account</Text>
         </TouchableOpacity>
 
       </ScrollView>
@@ -368,4 +438,23 @@ const styles = StyleSheet.create({
     alignItems:      'center',
   },
   signOutText: { color: COLORS.textMuted, fontWeight: '600', fontSize: 15 },
+
+  legalRow: {
+    flexDirection:  'row',
+    justifyContent: 'center',
+    alignItems:     'center',
+    gap:            8,
+    marginTop:      20,
+    marginBottom:   4,
+  },
+  legalLink: { color: COLORS.textMuted, fontSize: 12, textDecorationLine: 'underline' },
+  legalDot:  { color: COLORS.textMuted, fontSize: 12 },
+
+  deleteBtn: {
+    paddingVertical: 12,
+    alignItems:      'center',
+    marginTop:       8,
+    marginBottom:    8,
+  },
+  deleteText: { color: '#ef4444', fontSize: 14, fontWeight: '600' },
 })

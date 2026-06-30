@@ -26,7 +26,7 @@ Deno.serve(async (req) => {
     if (qotd) {
       questionId = qotd.question_id
     } else {
-      // Fall back to a random active question
+      // Pick a random active question and pin it for the rest of today
       const { data: allQuestions } = await db
         .from('questions')
         .select('id')
@@ -35,6 +35,11 @@ Deno.serve(async (req) => {
 
       if (!allQuestions || allQuestions.length === 0) return serverError('No questions available')
       questionId = allQuestions[Math.floor(Math.random() * allQuestions.length)].id
+
+      // Save so every subsequent request today gets the same question
+      await db
+        .from('question_of_the_day')
+        .upsert({ question_id: questionId, date: today }, { onConflict: 'date' })
     }
 
     const { data: question, error: qErr } = await db
@@ -45,7 +50,15 @@ Deno.serve(async (req) => {
 
     if (qErr || !question) return serverError('Failed to fetch question')
 
-    return respond({ date: today, question })
+    // Return the user's prior pick if they already answered today
+    const { data: priorAnswer } = await db
+      .from('qotd_answers')
+      .select('picked')
+      .eq('user_id', user.id)
+      .eq('date', today)
+      .maybeSingle()
+
+    return respond({ date: today, question, user_pick: priorAnswer?.picked ?? null })
   } catch (e) {
     return serverError(e.message)
   }

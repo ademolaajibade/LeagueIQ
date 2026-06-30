@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { fetchLeagues, fetchLeagueMastery, getQuestionOfTheDay, getUserStats, getLeaderboard } from '@/lib/api'
+import { fetchLeagues, fetchLeagueMastery, getQuestionOfTheDay, submitQotdAnswer, getUserStats, getLeaderboard } from '@/lib/api'
 import { LEAGUE_GRADIENTS, LEAGUE_NAMES, COLORS, LEVEL_COLORS } from '@/lib/colors'
 import { useGameStore } from '@/store/gameStore'
 import type { Profile, League, LeagueMastery, Question } from '@/types'
@@ -16,8 +16,9 @@ export default function HomePage() {
   const [profile,     setProfile]     = useState<Profile | null>(null)
   const [leagues,     setLeagues]     = useState<League[]>([])
   const [mastery,     setMastery]     = useState<LeagueMastery[]>([])
-  const [qotd,        setQotd]        = useState<Question | null>(null)
-  const [qotdPick,    setQotdPick]    = useState<number | null>(null)
+  const [qotd,              setQotd]              = useState<Question | null>(null)
+  const [qotdPick,          setQotdPick]          = useState<number | null>(null)
+  const [qotdCorrectAnswer, setQotdCorrectAnswer] = useState<number | null>(null)
   const [stats,       setStats]       = useState<{ games_played: number; accuracy: number } | null>(null)
   const [rank,        setRank]        = useState<number | null>(null)
   const [lastSession, setLastSession] = useState<{ league_id: string; mode: string } | null>(null)
@@ -38,6 +39,12 @@ export default function HomePage() {
     setLeagues(ls)
     setMastery(ms)
     setQotd(q?.question ?? null)
+
+    // Restore already-answered state from the server
+    if (q?.user_pick != null && q.question) {
+      setQotdPick(q.user_pick)
+      setQotdCorrectAnswer(q.question.correct_answer)
+    }
     setLoading(false)
 
     // secondary stats — don't block main render
@@ -60,9 +67,21 @@ export default function HomePage() {
 
   useEffect(() => { load() }, [load])
 
-  function handleQotdAnswer(index: number) {
+  async function handleQotdAnswer(index: number) {
     if (qotdPick !== null || !qotd) return
     setQotdPick(index)
+    // Show feedback immediately from the question data we already have
+    if (typeof qotd.correct_answer === 'number') {
+      setQotdCorrectAnswer(qotd.correct_answer)
+    }
+    // Persist to backend in background; update to server's authoritative answer if available
+    submitQotdAnswer(qotd.id, index)
+      .then((result) => {
+        if (typeof result.correct_answer === 'number') {
+          setQotdCorrectAnswer(result.correct_answer)
+        }
+      })
+      .catch(() => {/* already shown feedback above */})
   }
 
   function getMasteryContext(leagueId: string): 'best' | 'weakest' | null {
@@ -163,11 +182,21 @@ export default function HomePage() {
       {/* QOTD Hero */}
       {qotd && (
         <section>
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: COLORS.gold }} />
-            <p className="text-xs font-bold uppercase tracking-widest" style={{ color: COLORS.gold }}>
-              Today's Question
-            </p>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: COLORS.gold }} />
+              <p className="text-xs font-bold uppercase tracking-widest" style={{ color: COLORS.gold }}>
+                Today's Question
+              </p>
+            </div>
+            {qotdPick !== null && (
+              <span
+                className="text-xs font-bold px-2 py-0.5 rounded-full"
+                style={{ background: 'rgba(34,197,94,0.15)', color: COLORS.success }}
+              >
+                ✓ Completed
+              </span>
+            )}
           </div>
 
           <div
@@ -185,8 +214,8 @@ export default function HomePage() {
 
             <div className="p-4 space-y-2">
               {qotd.options.map((opt, i) => {
-                const picked    = qotdPick !== null
-                const isCorrect = i === qotd.correct_answer
+                const picked    = qotdPick !== null && typeof qotdCorrectAnswer === 'number'
+                const isCorrect = i === qotdCorrectAnswer
                 const isPicked  = i === qotdPick
 
                 let bg:         string = COLORS.surfaceAlt
@@ -209,9 +238,9 @@ export default function HomePage() {
                   <button
                     key={i}
                     onClick={() => handleQotdAnswer(i)}
-                    disabled={picked}
+                    disabled={qotdPick !== null}
                     className="w-full rounded-xl px-3 py-3 flex items-center gap-3 text-left transition-all hover:opacity-80"
-                    style={{ background: bg, border: `1px solid ${borderClr}`, cursor: picked ? 'default' : 'pointer' }}
+                    style={{ background: bg, border: `1px solid ${borderClr}`, cursor: qotdPick !== null ? 'default' : 'pointer' }}
                   >
                     <span
                       className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 transition-all"
@@ -225,14 +254,14 @@ export default function HomePage() {
               })}
             </div>
 
-            {qotdPick !== null && qotd.fact && (
+            {qotdPick !== null && qotdCorrectAnswer !== null && qotd.fact && (
               <div className="mx-4 mb-3 rounded-xl p-3 border" style={{ background: COLORS.surfaceAlt, borderColor: COLORS.gold + '30' }}>
                 <p className="text-xs font-bold uppercase tracking-wider mb-1" style={{ color: COLORS.gold }}>Did You Know?</p>
                 <p className="text-sm leading-relaxed" style={{ color: COLORS.textSecondary }}>{qotd.fact}</p>
               </div>
             )}
 
-            {qotdPick !== null && (
+            {qotdPick !== null && qotdCorrectAnswer !== null && (
               <div className="px-4 pb-4">
                 <button
                   onClick={() => router.push('/play')}

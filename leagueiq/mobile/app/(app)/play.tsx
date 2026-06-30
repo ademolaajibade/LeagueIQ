@@ -8,16 +8,17 @@ import { useRouter } from 'expo-router'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useAuth } from '../../contexts/AuthContext'
 import { COLORS, LEAGUE_GRADIENTS, LEAGUE_NAMES } from '../../lib/colors'
-import { fetchLeagues, fetchCategories, startSession, getDailyChallenge, startSurvival as apiStartSurvival } from '../../lib/api'
+import { fetchLeagues, fetchCategories, startSession, startSurvival as apiStartSurvival } from '../../lib/api'
+import { supabase } from '../../lib/supabase'
 import { useGameStore } from '../../store/gameStore'
 import type { League, Category, GameMode } from '../../types'
 
 type Step = 'league' | 'mode' | 'category'
 
 const MODES: { mode: GameMode | 'survival' | 'h2h'; label: string; icon: string; desc: string; needsCategory: boolean }[] = [
-  { mode: 'quick_play',       label: 'Quick Play',        icon: '⚡', desc: '10 questions, pick your category',     needsCategory: true  },
+  { mode: 'quick_play',       label: 'Quick Play',        icon: '⚡', desc: '5 questions, pick your category',      needsCategory: true  },
   { mode: 'daily_challenge',  label: 'Daily Challenge',   icon: '📅', desc: 'One per league, resets at midnight',   needsCategory: false },
-  { mode: 'speed_round',      label: 'Speed Round',       icon: '⏱',  desc: '20 questions, 8 seconds each',        needsCategory: false },
+  { mode: 'speed_round',      label: 'Speed Round',       icon: '⏱',  desc: '10–20 questions, 8 seconds each',     needsCategory: false },
   { mode: 'category_blitz',   label: 'Category Blitz',    icon: '🌍', desc: 'Random mix from all 5 leagues',       needsCategory: false },
   { mode: 'survival',         label: 'Survival Mode',     icon: '❤️', desc: 'One wrong answer ends everything',    needsCategory: false },
   { mode: 'h2h',              label: 'Head-to-Head',      icon: '🆚', desc: 'Live 1v1 match vs another player',    needsCategory: false },
@@ -37,6 +38,7 @@ export default function PlayScreen() {
   const [selectedMode, setSelectedMode] = useState<typeof MODES[0] | null>(null)
   const [loading, setLoading] = useState(true)
   const [starting, setStarting] = useState(false)
+  const [dailyChallengeCompleted, setDailyChallengeCompleted] = useState(false)
 
   useEffect(() => {
     fetchLeagues().then(setLeagues).finally(() => setLoading(false))
@@ -44,6 +46,23 @@ export default function PlayScreen() {
 
   async function handleLeagueSelect(league: League) {
     setSelectedLeague(league)
+    setDailyChallengeCompleted(false)
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      const today = new Date().toISOString().split('T')[0]
+      const { data } = await supabase
+        .from('game_sessions')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('league_id', league.id)
+        .eq('mode', 'daily_challenge')
+        .eq('status', 'completed')
+        .gte('completed_at', `${today}T00:00:00.000Z`)
+        .maybeSingle()
+      setDailyChallengeCompleted(!!data)
+    }
+
     setStep('mode')
   }
 
@@ -76,23 +95,17 @@ export default function PlayScreen() {
     try {
       if (modeItem.mode === 'survival') {
         const res = await apiStartSurvival({ league_id: selectedLeague.id })
-        storeStartSurvival(res.session_id, res.question, selectedLeague.id)
+        storeStartSurvival(res.session_id, res.question, selectedLeague.slug)
         router.push('/game/survival')
         return
       }
 
       const gameMode = modeItem.mode as GameMode
-      let res
-
-      if (gameMode === 'daily_challenge') {
-        res = await getDailyChallenge(selectedLeague.id)
-      } else {
-        res = await startSession({
-          league_id:   selectedLeague.id,
-          category_id: category?.id,
-          mode:        gameMode,
-        })
-      }
+      const res = await startSession({
+        league_id:   selectedLeague.id,
+        category_id: category?.id,
+        mode:        gameMode,
+      })
 
       setSession(res.session, res.questions)
       setPending({ league: selectedLeague, mode: gameMode, category })
@@ -157,16 +170,32 @@ export default function PlayScreen() {
         })}
 
         {/* Step 2: Mode picker */}
-        {step === 'mode' && MODES.map((m) => (
-          <TouchableOpacity key={m.mode} onPress={() => handleModeSelect(m)} activeOpacity={0.8} style={styles.modeCard}>
-            <Text style={styles.modeIcon}>{m.icon}</Text>
-            <View style={styles.modeInfo}>
-              <Text style={styles.modeLabel}>{m.label}</Text>
-              <Text style={styles.modeDesc}>{m.desc}</Text>
-            </View>
-            <Text style={styles.modeArrow}>›</Text>
-          </TouchableOpacity>
-        ))}
+        {step === 'mode' && MODES.map((m) => {
+          const isDone = m.mode === 'daily_challenge' && dailyChallengeCompleted
+          return (
+            <TouchableOpacity
+              key={m.mode}
+              onPress={() => !isDone && handleModeSelect(m)}
+              activeOpacity={isDone ? 1 : 0.8}
+              style={[styles.modeCard, isDone && styles.modeCardDone]}
+            >
+              <Text style={styles.modeIcon}>{m.icon}</Text>
+              <View style={styles.modeInfo}>
+                <Text style={styles.modeLabel}>{m.label}</Text>
+                <Text style={styles.modeDesc}>
+                  {isDone ? "You've already completed today's challenge" : m.desc}
+                </Text>
+              </View>
+              {isDone ? (
+                <View style={styles.donePill}>
+                  <Text style={styles.doneText}>Done ✓</Text>
+                </View>
+              ) : (
+                <Text style={styles.modeArrow}>›</Text>
+              )}
+            </TouchableOpacity>
+          )
+        })}
 
         {/* Step 3: Category picker */}
         {step === 'category' && categories.map((cat, i) => {
@@ -236,11 +265,21 @@ const styles = StyleSheet.create({
     alignItems:      'center',
     gap:             14,
   },
+  modeCardDone: { opacity: 0.75, borderColor: COLORS.success + '60' },
   modeIcon:  { fontSize: 28 },
   modeInfo:  { flex: 1 },
   modeLabel: { color: COLORS.textPrimary, fontSize: 16, fontWeight: '700' },
   modeDesc:  { color: COLORS.textMuted, fontSize: 13, marginTop: 2 },
   modeArrow: { color: COLORS.textMuted, fontSize: 22 },
+  donePill: {
+    backgroundColor: COLORS.success + '20',
+    borderRadius:    8,
+    paddingHorizontal: 10,
+    paddingVertical:   4,
+    borderWidth:     1,
+    borderColor:     COLORS.success + '40',
+  },
+  doneText: { color: COLORS.success, fontSize: 11, fontWeight: '700' },
 
   catCard: {
     backgroundColor: COLORS.surface,

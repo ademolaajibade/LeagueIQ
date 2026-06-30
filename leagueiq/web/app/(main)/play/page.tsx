@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { COLORS, LEAGUE_GRADIENTS, LEAGUE_NAMES } from '@/lib/colors'
 import {
   fetchLeagues, fetchCategories,
-  startSession, getDailyChallenge, startSurvival as apiStartSurvival,
+  startSession, startSurvival as apiStartSurvival,
 } from '@/lib/api'
 import { useGameStore } from '@/store/gameStore'
 import type { League, Category, GameMode } from '@/types'
@@ -13,9 +13,9 @@ import type { League, Category, GameMode } from '@/types'
 type Step = 'league' | 'mode' | 'category'
 
 const MODES = [
-  { mode: 'quick_play'      as GameMode, label: 'Quick Play',      icon: '⚡', desc: '10 questions, pick your category',     needsCategory: true  },
+  { mode: 'quick_play'      as GameMode, label: 'Quick Play',      icon: '⚡', desc: '5 questions, pick your category',      needsCategory: true  },
   { mode: 'daily_challenge' as GameMode, label: 'Daily Challenge', icon: '📅', desc: 'One per league, resets at midnight',   needsCategory: false },
-  { mode: 'speed_round'     as GameMode, label: 'Speed Round',     icon: '⏱',  desc: '20 questions, 8 seconds each',        needsCategory: false },
+  { mode: 'speed_round'     as GameMode, label: 'Speed Round',     icon: '⏱',  desc: '10–20 questions, 8 seconds each',     needsCategory: false },
   { mode: 'category_blitz'  as GameMode, label: 'Category Blitz',  icon: '🌍', desc: 'Random mix from all 5 leagues',       needsCategory: false },
   { mode: 'survival'        as const,    label: 'Survival Mode',   icon: '❤️', desc: 'One wrong answer ends everything',    needsCategory: false },
   { mode: 'h2h'             as const,    label: 'Head-to-Head',    icon: '🆚', desc: 'Live 1v1 match vs another player',    needsCategory: false },
@@ -27,15 +27,16 @@ export default function PlayPage() {
   const router = useRouter()
   const { setPending, setSession, startSurvival: storeStartSurvival } = useGameStore()
 
-  const [step,           setStep]           = useState<Step>('league')
-  const [leagues,        setLeagues]        = useState<League[]>([])
-  const [categories,     setCategories]     = useState<Category[]>([])
-  const [selectedLeague, setSelectedLeague] = useState<League | null>(null)
-  const [selectedMode,   setSelectedMode]   = useState<typeof MODES[0] | null>(null)
-  const [isPremium,      setIsPremium]      = useState(false)
-  const [loading,        setLoading]        = useState(true)
-  const [starting,       setStarting]       = useState(false)
-  const [error,          setError]          = useState<string | null>(null)
+  const [step,                    setStep]                    = useState<Step>('league')
+  const [leagues,                 setLeagues]                 = useState<League[]>([])
+  const [categories,              setCategories]              = useState<Category[]>([])
+  const [selectedLeague,          setSelectedLeague]          = useState<League | null>(null)
+  const [selectedMode,            setSelectedMode]            = useState<typeof MODES[0] | null>(null)
+  const [isPremium,               setIsPremium]               = useState(false)
+  const [loading,                 setLoading]                 = useState(true)
+  const [starting,                setStarting]                = useState(false)
+  const [error,                   setError]                   = useState<string | null>(null)
+  const [dailyChallengeCompleted, setDailyChallengeCompleted] = useState(false)
 
   useEffect(() => {
     async function init() {
@@ -55,6 +56,25 @@ export default function PlayPage() {
 
   async function handleLeagueSelect(league: League) {
     setSelectedLeague(league)
+    setDailyChallengeCompleted(false)
+
+    const { createClient } = await import('@/lib/supabase/client')
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      const today = new Date().toISOString().split('T')[0]
+      const { data } = await supabase
+        .from('game_sessions')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('league_id', league.id)
+        .eq('mode', 'daily_challenge')
+        .eq('status', 'completed')
+        .gte('completed_at', `${today}T00:00:00.000Z`)
+        .maybeSingle()
+      setDailyChallengeCompleted(!!data)
+    }
+
     setStep('mode')
   }
 
@@ -86,14 +106,12 @@ export default function PlayPage() {
     try {
       if (modeItem.mode === 'survival') {
         const res = await apiStartSurvival({ league_id: selectedLeague.id })
-        storeStartSurvival(res.session_id, res.question, selectedLeague.id)
+        storeStartSurvival(res.session_id, res.question, selectedLeague.slug)
         router.push('/survival')
         return
       }
       const gameMode = modeItem.mode as GameMode
-      const res = gameMode === 'daily_challenge'
-        ? await getDailyChallenge(selectedLeague.id)
-        : await startSession({ league_id: selectedLeague.id, category_id: category?.id, mode: gameMode })
+      const res = await startSession({ league_id: selectedLeague.id, category_id: category?.id, mode: gameMode })
 
       setSession(res.session, res.questions)
       setPending({ league: selectedLeague, mode: gameMode, category })
@@ -175,21 +193,42 @@ export default function PlayPage() {
       {/* Step 2: Mode picker */}
       {step === 'mode' && (
         <div className="space-y-2.5">
-          {MODES.map((m) => (
-            <button
-              key={m.mode}
-              onClick={() => handleModeSelect(m)}
-              className="w-full rounded-2xl p-4 flex items-center gap-4 border transition-opacity hover:opacity-80 text-left"
-              style={{ background: COLORS.surface, borderColor: COLORS.border }}
-            >
-              <span className="text-3xl w-10 text-center">{m.icon}</span>
-              <div className="flex-1">
-                <p className="font-bold text-white">{m.label}</p>
-                <p className="text-sm mt-0.5" style={{ color: COLORS.textMuted }}>{m.desc}</p>
-              </div>
-              <span className="text-xl" style={{ color: COLORS.textMuted }}>›</span>
-            </button>
-          ))}
+          {MODES.map((m) => {
+            const isDone = m.mode === 'daily_challenge' && dailyChallengeCompleted
+            return (
+              <button
+                key={m.mode}
+                onClick={() => !isDone && handleModeSelect(m)}
+                disabled={isDone}
+                className="w-full rounded-2xl p-4 flex items-center gap-4 border text-left"
+                style={{
+                  background:   COLORS.surface,
+                  borderColor:  isDone ? COLORS.success + '60' : COLORS.border,
+                  opacity:      isDone ? 0.75 : 1,
+                  cursor:       isDone ? 'default' : 'pointer',
+                  transition:   'opacity 0.15s',
+                }}
+              >
+                <span className="text-3xl w-10 text-center">{m.icon}</span>
+                <div className="flex-1">
+                  <p className="font-bold text-white">{m.label}</p>
+                  <p className="text-sm mt-0.5" style={{ color: COLORS.textMuted }}>
+                    {isDone ? "You've already completed today's challenge" : m.desc}
+                  </p>
+                </div>
+                {isDone ? (
+                  <span
+                    className="text-xs font-bold px-2.5 py-1 rounded-lg border flex-shrink-0"
+                    style={{ color: COLORS.success, borderColor: COLORS.success + '40', background: COLORS.success + '15' }}
+                  >
+                    Done ✓
+                  </span>
+                ) : (
+                  <span className="text-xl" style={{ color: COLORS.textMuted }}>›</span>
+                )}
+              </button>
+            )
+          })}
         </div>
       )}
 

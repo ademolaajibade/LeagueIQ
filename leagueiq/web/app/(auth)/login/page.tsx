@@ -45,7 +45,7 @@ export default function LoginPage() {
             value={email}
             onChange={e => setEmail(e.target.value)}
             required
-            className="w-full px-4 py-3 rounded-xl bg-gray-900 text-white placeholder-gray-600 border border-gray-800 focus:outline-none focus:border-emerald-500 transition"
+            className="w-full px-4 py-3 rounded-xl bg-gray-900 text-white placeholder-gray-600 border border-gray-800 focus:outline-none focus:border-iq-gold transition"
           />
           <input
             type="password"
@@ -53,16 +53,21 @@ export default function LoginPage() {
             value={password}
             onChange={e => setPassword(e.target.value)}
             required
-            className="w-full px-4 py-3 rounded-xl bg-gray-900 text-white placeholder-gray-600 border border-gray-800 focus:outline-none focus:border-emerald-500 transition"
+            className="w-full px-4 py-3 rounded-xl bg-gray-900 text-white placeholder-gray-600 border border-gray-800 focus:outline-none focus:border-iq-gold transition"
           />
           {error && <p className="text-red-400 text-sm">{error}</p>}
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-black font-bold disabled:opacity-40 transition"
+            className="w-full py-3 rounded-xl bg-iq-gold hover:opacity-90 text-black font-bold disabled:opacity-40 transition"
           >
             {loading ? 'Signing in…' : 'Sign In'}
           </button>
+          <div className="text-right">
+            <Link href="/forgot-password" className="text-gray-500 hover:text-gray-300 text-sm transition">
+              Forgot password?
+            </Link>
+          </div>
         </form>
 
         <div className="flex items-center gap-3 my-6">
@@ -82,7 +87,7 @@ export default function LoginPage() {
 
         <p className="text-center text-gray-600 text-sm mt-8">
           No account?{' '}
-          <Link href="/signup" className="text-emerald-400 hover:text-emerald-300 font-semibold">
+          <Link href="/signup" className="text-iq-gold hover:opacity-80 font-semibold">
             Sign up
           </Link>
         </p>

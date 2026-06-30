@@ -40,6 +40,7 @@ export default function ProfilePage() {
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [loading, setLoading] = useState(true);
   const [upgrading, setUpgrading] = useState(false);
+  const [deleting, setDeleting]   = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -92,6 +93,35 @@ export default function ProfilePage() {
     router.push("/login");
   }
 
+  async function deleteAccount() {
+    if (!confirm("This permanently deletes your account and all your data. This cannot be undone.")) return;
+    setDeleting(true);
+    setError(null);
+    try {
+      const { data: { session: s } } = await supabase.auth.getSession();
+      if (!s?.access_token) throw new Error("Not authenticated");
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/delete-account`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${s.access_token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      if (!res.ok) {
+        const body = await res.json();
+        throw new Error(body?.error ?? "Could not delete account");
+      }
+      await supabase.auth.signOut();
+      router.push("/login");
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Could not delete account");
+      setDeleting(false);
+    }
+  }
+
   function getMastery(leagueId: string) {
     return mastery.find((m) => m.league_id === leagueId);
   }
@@ -108,7 +138,14 @@ export default function ProfilePage() {
   }
 
   const levelColor = LEVEL_COLORS[profile.level] ?? COLORS.gold;
-  const xpPercent = Math.min(((profile.xp % 500) / 500) * 100, 100);
+  const xpPercent = (() => {
+    const xp = profile.xp;
+    if (xp >= 10000) return 100;
+    if (xp >= 5000) return ((xp - 5000) / 5000) * 100;
+    if (xp >= 2000) return ((xp - 2000) / 3000) * 100;
+    if (xp >= 500)  return ((xp - 500) / 1500) * 100;
+    return (xp / 500) * 100;
+  })();
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
@@ -327,6 +364,23 @@ export default function ProfilePage() {
         style={{ color: COLORS.textMuted, borderColor: COLORS.border }}
       >
         Sign Out
+      </button>
+
+      {/* Legal links */}
+      <div className="flex justify-center items-center gap-3 text-xs" style={{ color: COLORS.textMuted }}>
+        <a href="/privacy" className="underline hover:text-gray-300 transition">Privacy Policy</a>
+        <span>·</span>
+        <a href="/terms" className="underline hover:text-gray-300 transition">Terms of Service</a>
+      </div>
+
+      {/* Delete account */}
+      <button
+        onClick={deleteAccount}
+        disabled={deleting}
+        className="w-full py-2.5 text-sm font-semibold disabled:opacity-40 transition"
+        style={{ color: "#ef4444" }}
+      >
+        {deleting ? "Deleting…" : "Delete Account"}
       </button>
     </div>
   );

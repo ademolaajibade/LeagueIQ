@@ -80,13 +80,14 @@ export default function SurvivalScreen() {
 
       if (result.fact) { setFact(result.fact); setShowFact(true) }
 
+      const hasFact = !!result.fact
       timeoutRef.current = setTimeout(() => {
         setShowFact(false)
         setFact(null)
         setAnswerStates(['idle', 'idle', 'idle', 'idle'])
 
-        if (result.next_question === null || !result.is_correct) {
-          // Game over
+        if (!result.is_correct || result.next_question === null) {
+          // Game over — wrong answer, or exhausted all questions
           Animated.timing(deathAnim, { toValue: 1, duration: 600, useNativeDriver: true }).start()
           setDead(true)
         } else {
@@ -96,13 +97,18 @@ export default function SurvivalScreen() {
           setSubmitting(false)
           setTimerRunning(true)
         }
-      }, showFact ? 2800 : 1200)
+      }, hasFact ? 2800 : 1200)
 
     } catch {
       Alert.alert('Error', 'Failed to submit answer')
       setSubmitting(false)
       setTimerRunning(true)
     }
+  }
+
+  function handleLeaderboard() {
+    reset()
+    router.replace('/(app)/leaderboard')
   }
 
   function handleDone() {
@@ -119,7 +125,7 @@ export default function SurvivalScreen() {
           <Text style={styles.deathSub}>You survived</Text>
           <Text style={[styles.deathCount, { color: accentColor }]}>{survivalCount}</Text>
           <Text style={styles.deathSub2}>questions</Text>
-          <TouchableOpacity style={[styles.doneBtn, { backgroundColor: accentColor }]} onPress={handleDone} activeOpacity={0.85}>
+          <TouchableOpacity style={[styles.doneBtn, { backgroundColor: accentColor }]} onPress={handleLeaderboard} activeOpacity={0.85}>
             <Text style={styles.doneBtnText}>See Leaderboard</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.homeBtn} onPress={handleDone} activeOpacity={0.7}>

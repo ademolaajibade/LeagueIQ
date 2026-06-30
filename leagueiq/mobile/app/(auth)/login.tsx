@@ -94,6 +94,12 @@ export default function LoginScreen() {
           }
         </TouchableOpacity>
 
+        <Link href="/(auth)/forgot-password" asChild>
+          <TouchableOpacity style={styles.forgotRow}>
+            <Text style={styles.forgotText}>Forgot password?</Text>
+          </TouchableOpacity>
+        </Link>
+
         <View style={styles.dividerRow}>
           <View style={styles.divider} />
           <Text style={styles.dividerText}>or</Text>
@@ -150,7 +156,7 @@ const styles = StyleSheet.create({
     borderColor:     '#2a2a2a',
   },
   btn: {
-    backgroundColor: '#00e5a0',
+    backgroundColor: '#F5C518',
     borderRadius:    12,
     padding:         16,
     alignItems:      'center',
@@ -174,11 +180,13 @@ const styles = StyleSheet.create({
     borderColor:     '#2a2a2a',
   },
   googleBtnText: { color: '#fff', fontWeight: '600', fontSize: 16 },
+  forgotRow: { alignItems: 'center', marginTop: 12 },
+  forgotText: { color: '#555', fontSize: 13, fontWeight: '500' },
   footer: {
     flexDirection:  'row',
     justifyContent: 'center',
     marginTop:      28,
   },
   footerText: { color: '#555', fontSize: 14 },
-  link:       { color: '#00e5a0', fontWeight: '600', fontSize: 14 },
+  link:       { color: '#F5C518', fontWeight: '600', fontSize: 14 },
 })

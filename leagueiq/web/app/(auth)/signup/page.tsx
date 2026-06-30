@@ -43,7 +43,7 @@ export default function SignupPage() {
           <h2 className="text-2xl font-bold mb-3">Check your inbox</h2>
           <p className="text-gray-400 mb-2">
             We sent a confirmation link to{' '}
-            <span className="text-emerald-400 font-semibold">{email}</span>.
+            <span className="text-iq-gold font-semibold">{email}</span>.
           </p>
           <p className="text-gray-600 text-sm mb-8">
             Click the link to verify your account, then sign in.
@@ -72,7 +72,7 @@ export default function SignupPage() {
             value={email}
             onChange={e => setEmail(e.target.value)}
             required
-            className="w-full px-4 py-3 rounded-xl bg-gray-900 text-white placeholder-gray-600 border border-gray-800 focus:outline-none focus:border-emerald-500 transition"
+            className="w-full px-4 py-3 rounded-xl bg-gray-900 text-white placeholder-gray-600 border border-gray-800 focus:outline-none focus:border-iq-gold transition"
           />
           <input
             type="password"
@@ -81,7 +81,7 @@ export default function SignupPage() {
             onChange={e => setPassword(e.target.value)}
             required
             minLength={8}
-            className="w-full px-4 py-3 rounded-xl bg-gray-900 text-white placeholder-gray-600 border border-gray-800 focus:outline-none focus:border-emerald-500 transition"
+            className="w-full px-4 py-3 rounded-xl bg-gray-900 text-white placeholder-gray-600 border border-gray-800 focus:outline-none focus:border-iq-gold transition"
           />
           <input
             type="password"
@@ -89,13 +89,13 @@ export default function SignupPage() {
             value={confirm}
             onChange={e => setConfirm(e.target.value)}
             required
-            className="w-full px-4 py-3 rounded-xl bg-gray-900 text-white placeholder-gray-600 border border-gray-800 focus:outline-none focus:border-emerald-500 transition"
+            className="w-full px-4 py-3 rounded-xl bg-gray-900 text-white placeholder-gray-600 border border-gray-800 focus:outline-none focus:border-iq-gold transition"
           />
           {error && <p className="text-red-400 text-sm">{error}</p>}
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-black font-bold disabled:opacity-40 transition"
+            className="w-full py-3 rounded-xl bg-iq-gold hover:opacity-90 text-black font-bold disabled:opacity-40 transition"
           >
             {loading ? 'Creating account…' : 'Create Account'}
           </button>
@@ -118,7 +118,7 @@ export default function SignupPage() {
 
         <p className="text-center text-gray-600 text-sm mt-8">
           Already have an account?{' '}
-          <Link href="/login" className="text-emerald-400 hover:text-emerald-300 font-semibold">
+          <Link href="/login" className="text-iq-gold hover:opacity-80 font-semibold">
             Sign in
           </Link>
         </p>

@@ -129,15 +129,17 @@ export interface SubmitAnswerPayload {
 export interface SubmitAnswerResponse {
   is_correct:     boolean
   correct_answer: 0 | 1 | 2 | 3
-  xp_delta:       number
   fact:           string | null
+  score:          number
+  xp_earned:      number
 }
 
 export interface EndSessionResponse {
-  xp_earned:           number
-  total_score:         number
-  level_up:            UserLevel | null
-  streak:              number
+  session:              GameSession
+  correct_count:        number
+  xp_earned:            number
+  level_up:             UserLevel | null
+  streak:               number
   leaderboard_position: number | null
 }
 

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import {
-  View, Text, StyleSheet, Alert,
+  View, Text, StyleSheet, Alert, TouchableOpacity, ActivityIndicator,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useLocalSearchParams, useRouter } from 'expo-router'
@@ -13,6 +13,8 @@ import { supabase } from '../../lib/supabase'
 import { useGameStore } from '../../store/gameStore'
 import { useAuth } from '../../contexts/AuthContext'
 import type { Match, Question } from '../../types'
+
+const LOBBY_TIMEOUT_SEC = 120
 
 type AnswerState = 'idle' | 'correct' | 'wrong' | 'revealed'
 
@@ -30,12 +32,37 @@ export default function MatchScreen() {
   const [timerRunning, setTimerRunning] = useState(false)
   const [opponentAnswered, setOpponentAnswered] = useState(false)
   const [waitingForOpponent, setWaitingForOpponent] = useState(true)
+  const [lobbySecondsLeft, setLobbySecondsLeft] = useState(LOBBY_TIMEOUT_SEC)
   const [myScore, setMyScore]         = useState(0)
   const [opponentScore, setOpponentScore] = useState(0)
 
-  const questionStartMs = useRef(Date.now())
-  const timeoutRef      = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const questionStartMs  = useRef(Date.now())
+  const timeoutRef       = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const lobbyIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const accentColor     = LEAGUE_COLORS[pending?.league?.slug ?? ''] ?? COLORS.gold
+
+  async function cancelLobby() {
+    if (lobbyIntervalRef.current) clearInterval(lobbyIntervalRef.current)
+    // Mark the match as cancelled so the row doesn't linger
+    if (id) {
+      await supabase.from('matches').update({ status: 'cancelled' }).eq('id', id).catch(() => null)
+    }
+    router.back()
+  }
+
+  async function loadQuestions(questionIds: string[]) {
+    if (questionIds.length === 0) return
+    const { data } = await supabase
+      .from('questions')
+      .select('id, league_id, category_id, question, options, difficulty, fact, is_active, created_at')
+      .in('id', questionIds)
+    if (data) {
+      const ordered = questionIds
+        .map((qId) => data.find((q) => q.id === qId))
+        .filter(Boolean) as Omit<Question, 'correct_answer'>[]
+      setQuestions(ordered)
+    }
+  }
 
   // Load match + subscribe to Realtime
   useEffect(() => {
@@ -49,6 +76,7 @@ export default function MatchScreen() {
       .then(({ data }) => {
         if (data) {
           setMatch(data as Match)
+          loadQuestions((data as Match).question_ids ?? [])
           if (data.status === 'active') {
             setWaitingForOpponent(false)
             setTimerRunning(true)
@@ -94,6 +122,27 @@ export default function MatchScreen() {
       if (timeoutRef.current) clearTimeout(timeoutRef.current)
     }
   }, [id])
+
+  // Lobby countdown — auto-cancel when time runs out
+  useEffect(() => {
+    if (!waitingForOpponent) {
+      if (lobbyIntervalRef.current) clearInterval(lobbyIntervalRef.current)
+      return
+    }
+    lobbyIntervalRef.current = setInterval(() => {
+      setLobbySecondsLeft((s) => {
+        if (s <= 1) {
+          clearInterval(lobbyIntervalRef.current!)
+          cancelLobby()
+          return 0
+        }
+        return s - 1
+      })
+    }, 1000)
+    return () => {
+      if (lobbyIntervalRef.current) clearInterval(lobbyIntervalRef.current)
+    }
+  }, [waitingForOpponent])
 
   const handleExpire = useCallback(() => {
     if (submitting) return
@@ -155,17 +204,24 @@ export default function MatchScreen() {
   const question = questions[currentIndex]
 
   if (waitingForOpponent) {
+    const mins = Math.floor(lobbySecondsLeft / 60)
+    const secs = lobbySecondsLeft % 60
+    const timeStr = `${mins}:${secs.toString().padStart(2, '0')}`
     return (
       <SafeAreaView style={styles.safe}>
         <View style={styles.waiting}>
-          <Text style={styles.waitingEmoji}>⏳</Text>
+          <ActivityIndicator size="large" color={COLORS.gold} style={{ marginBottom: 8 }} />
           <Text style={styles.waitingTitle}>Waiting for opponent…</Text>
+          <Text style={styles.countdown}>Auto-cancels in {timeStr}</Text>
           {match && (
             <View style={styles.codePill}>
               <Text style={styles.codeLabel}>Join Code</Text>
               <Text style={styles.codeValue}>{match.id.slice(0, 8).toUpperCase()}</Text>
             </View>
           )}
+          <TouchableOpacity style={styles.cancelBtn} onPress={cancelLobby}>
+            <Text style={styles.cancelText}>Cancel</Text>
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
     )
@@ -296,8 +352,17 @@ const styles = StyleSheet.create({
   },
 
   waiting: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 16, padding: 32 },
-  waitingEmoji: { fontSize: 52 },
   waitingTitle: { color: COLORS.textPrimary, fontSize: 22, fontWeight: '700', textAlign: 'center' },
+  countdown: { color: COLORS.textMuted, fontSize: 14 },
+  cancelBtn: {
+    marginTop: 8,
+    paddingHorizontal: 32,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  cancelText: { color: COLORS.textMuted, fontSize: 15, fontWeight: '600' },
   codePill: {
     backgroundColor: COLORS.surface,
     borderRadius: 14,

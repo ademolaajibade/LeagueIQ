@@ -1,7 +1,7 @@
 {
-  "/_not-found/page": "app/_not-found/page.js",
-  "/page": "app/page.js",
+  "/(auth)/login/page": "app/(auth)/login/page.js",
   "/(main)/play/page": "app/(main)/play/page.js",
-  "/(main)/quiz/page": "app/(main)/quiz/page.js",
-  "/(main)/home/page": "app/(main)/home/page.js"
+  "/(main)/results/page": "app/(main)/results/page.js",
+  "/(main)/home/page": "app/(main)/home/page.js",
+  "/(main)/quiz/page": "app/(main)/quiz/page.js"
 }

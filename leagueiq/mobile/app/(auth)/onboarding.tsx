@@ -4,6 +4,7 @@ import {
   FlatList, ActivityIndicator, Alert, ScrollView,
 } from 'react-native'
 import { useRouter } from 'expo-router'
+import { openBrowserAsync } from 'expo-web-browser'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
 import type { League, Club } from '../../types'
@@ -147,6 +148,17 @@ export default function OnboardingScreen() {
           >
             <Text style={styles.btnText}>Continue</Text>
           </TouchableOpacity>
+
+          <View style={styles.legalRow}>
+            <Text style={styles.legalText}>By continuing you agree to our </Text>
+            <TouchableOpacity onPress={() => openBrowserAsync('https://leagueiq.app/terms')}>
+              <Text style={styles.legalLink}>Terms</Text>
+            </TouchableOpacity>
+            <Text style={styles.legalText}> and </Text>
+            <TouchableOpacity onPress={() => openBrowserAsync('https://leagueiq.app/privacy')}>
+              <Text style={styles.legalLink}>Privacy Policy</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     )
@@ -162,7 +174,7 @@ export default function OnboardingScreen() {
           <Text style={styles.desc}>Which competition do you follow the most?</Text>
 
           {leagues.length === 0
-            ? <ActivityIndicator color="#00e5a0" style={{ marginTop: 40 }} />
+            ? <ActivityIndicator color="#F5C518" style={{ marginTop: 40 }} />
             : leagues.map((league) => (
                 <TouchableOpacity
                   key={league.id}
@@ -196,7 +208,7 @@ export default function OnboardingScreen() {
         </Text>
 
         {clubs.length === 0
-          ? <ActivityIndicator color="#00e5a0" style={{ marginTop: 40 }} />
+          ? <ActivityIndicator color="#F5C518" style={{ marginTop: 40 }} />
           : (
             <FlatList
               data={clubs}
@@ -207,7 +219,7 @@ export default function OnboardingScreen() {
                   style={[
                     styles.clubCard,
                     selectedClub?.id === item.id && {
-                      borderColor:     selectedLeague?.accent_color ?? '#00e5a0',
+                      borderColor:     selectedLeague?.accent_color ?? '#F5C518',
                       backgroundColor: '#1c1c1c',
                     },
                   ]}
@@ -272,9 +284,9 @@ const styles = StyleSheet.create({
   inputError: { borderColor: '#ff4d4f' },
   hint:    { color: '#555', fontSize: 13, marginBottom: 8 },
   error:   { color: '#ff4d4f', fontSize: 13, marginBottom: 8 },
-  success: { color: '#00e5a0', fontSize: 13, marginBottom: 8 },
+  success: { color: '#22C55E', fontSize: 13, marginBottom: 8 },
   btn: {
-    backgroundColor: '#00e5a0',
+    backgroundColor: '#F5C518',
     borderRadius:    12,
     padding:         16,
     alignItems:      'center',
@@ -315,4 +327,14 @@ const styles = StyleSheet.create({
     justifyContent:  'center',
   },
   skipText: { color: '#666', fontWeight: '600', fontSize: 14 },
+
+  legalRow: {
+    flexDirection:  'row',
+    flexWrap:       'wrap',
+    justifyContent: 'center',
+    marginTop:      20,
+    gap:            2,
+  },
+  legalText: { color: '#555', fontSize: 12 },
+  legalLink: { color: '#F5C518', fontSize: 12, textDecorationLine: 'underline' },
 })

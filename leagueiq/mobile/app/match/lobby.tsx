@@ -6,7 +6,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { COLORS } from '../../lib/colors'
-import { fetchLeagues, createMatch, joinMatch } from '../../lib/api'
+import { createMatch, joinMatch } from '../../lib/api'
 import { useGameStore } from '../../store/gameStore'
 
 type Tab = 'create' | 'join'
@@ -18,8 +18,6 @@ export default function LobbyScreen() {
   const [tab, setTab]         = useState<Tab>('create')
   const [joinCode, setJoinCode] = useState('')
   const [loading, setLoading]  = useState(false)
-  const [matchId, setMatchId]  = useState<string | null>(null)
-  const [myJoinCode, setMyJoinCode] = useState<string | null>(null)
 
   async function handleCreate() {
     if (!pending?.league) {
@@ -30,8 +28,6 @@ export default function LobbyScreen() {
     setLoading(true)
     try {
       const res = await createMatch({ league_id: pending.league.id })
-      setMatchId(res.match_id)
-      setMyJoinCode(res.join_code)
       router.push(`/match/${res.match_id}`)
     } catch (e: unknown) {
       Alert.alert('Error', e instanceof Error ? e.message : 'Could not create match')
@@ -41,7 +37,7 @@ export default function LobbyScreen() {
   }
 
   async function handleJoin() {
-    if (joinCode.trim().length < 6) {
+    if (joinCode.trim().length < 8) {
       Alert.alert('Invalid Code', 'Enter the 8-character join code')
       return
     }

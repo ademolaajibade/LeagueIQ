@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
     // Fetch current profile
     const { data: profile, error: profileErr } = await db
       .from('profiles')
-      .select('xp, level, streak, push_token, notifications_enabled')
+      .select('xp, level, streak, last_streak_date, push_token, notifications_enabled')
       .eq('id', user.id)
       .single()
 
@@ -63,18 +63,28 @@ Deno.serve(async (req) => {
     const newLevel = calcLevel(newXp)
     const levelUp = newLevel !== profile.level ? newLevel : null
 
-    // Update streak: only if mode is daily_challenge or at least 5/10 correct
+    // Update streak: only once per day, only if qualifying score or daily_challenge
     const today = new Date().toISOString().split('T')[0]
     let newStreak = profile.streak
+    let streakUpdated = false
 
-    if (completedSession.mode === 'daily_challenge' || correctCount >= Math.ceil(completedSession.total_questions / 2)) {
+    if (
+      (completedSession.mode === 'daily_challenge' || correctCount >= Math.ceil(completedSession.total_questions / 2)) &&
+      profile.last_streak_date !== today
+    ) {
       newStreak = profile.streak + 1
+      streakUpdated = true
     }
 
     // Update profile
     await db
       .from('profiles')
-      .update({ xp: newXp, level: newLevel, streak: newStreak })
+      .update({
+        xp: newXp,
+        level: newLevel,
+        streak: newStreak,
+        ...(streakUpdated ? { last_streak_date: today } : {}),
+      })
       .eq('id', user.id)
 
     // Upsert leaderboard entry
@@ -116,19 +126,26 @@ Deno.serve(async (req) => {
         .single()
 
       if (mastery) {
-        // Only increment if this category wasn't already counted
-        const newCount = mastery.categories_completed + 1
-        const newMasteryLevel = calcMasteryLevel(newCount)
-        await db
-          .from('league_mastery')
-          .update({ categories_completed: newCount, mastery_level: newMasteryLevel })
-          .eq('id', mastery.id)
+        const completedIds: string[] = (mastery.completed_category_ids as string[]) ?? []
+        if (!completedIds.includes(completedSession.category_id)) {
+          const newCount = mastery.categories_completed + 1
+          const newMasteryLevel = calcMasteryLevel(newCount)
+          await db
+            .from('league_mastery')
+            .update({
+              categories_completed: newCount,
+              mastery_level: newMasteryLevel,
+              completed_category_ids: [...completedIds, completedSession.category_id],
+            })
+            .eq('id', mastery.id)
+        }
       } else {
         await db.from('league_mastery').insert({
           user_id: user.id,
           league_id: completedSession.league_id,
           categories_completed: 1,
           mastery_level: calcMasteryLevel(1),
+          completed_category_ids: [completedSession.category_id],
         })
       }
     }

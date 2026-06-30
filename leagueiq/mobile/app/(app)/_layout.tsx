@@ -52,6 +52,14 @@ export default function AppLayout() {
         }}
       />
       <Tabs.Screen
+        name="tournaments"
+        options={{
+          title:      'Tournaments',
+          tabBarIcon: ({ focused, color, size }) =>
+            tabIcon(focused, 'medal', 'medal-outline')({ color, size }),
+        }}
+      />
+      <Tabs.Screen
         name="profile"
         options={{
           title:      'Profile',

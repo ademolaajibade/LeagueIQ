@@ -17,7 +17,7 @@ Deno.serve(async (req) => {
     const body = await req.json()
     const { session_id, question_id, selected_answer, time_taken_ms } = body
 
-    if (!session_id || !question_id || selected_answer == null || time_taken_ms == null) {
+    if (!session_id || !question_id || selected_answer === undefined || time_taken_ms == null) {
       return badRequest('session_id, question_id, selected_answer, and time_taken_ms are required')
     }
 

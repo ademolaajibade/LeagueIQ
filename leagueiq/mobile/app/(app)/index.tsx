@@ -3,6 +3,7 @@ import {
   View, Text, ScrollView, StyleSheet,
   TouchableOpacity, ActivityIndicator, RefreshControl, Pressable,
 } from 'react-native'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { useAuth } from '../../contexts/AuthContext'
@@ -10,7 +11,7 @@ import LeagueCard from '../../components/LeagueCard'
 import StreakBadge from '../../components/StreakBadge'
 import LevelBadge from '../../components/LevelBadge'
 import { COLORS, LEAGUE_NAMES } from '../../lib/colors'
-import { fetchLeagues, fetchLeagueMastery, getQuestionOfTheDay } from '../../lib/api'
+import { fetchLeagues, fetchLeagueMastery, getQuestionOfTheDay, submitQotdAnswer } from '../../lib/api'
 import { useGameStore } from '../../store/gameStore'
 import type { League, LeagueMastery, Question } from '../../types'
 
@@ -35,7 +36,18 @@ export default function HomeScreen() {
       ])
       setLeagues(ls)
       setMastery(ms)
-      setQotd(q?.question ?? null)
+      const question = q?.question ?? null
+      setQotd(question)
+      if (question) {
+        // Prefer server-side answer (survives reinstall); fall back to date-keyed AsyncStorage
+        const today = new Date().toISOString().split('T')[0]
+        if (q?.user_pick != null) {
+          setQotdPick(q.user_pick)
+        } else {
+          const saved = await AsyncStorage.getItem(`qotd_pick_${today}`)
+          if (saved !== null) setQotdPick(Number(saved))
+        }
+      }
     } finally {
       setLoading(false)
       setRefreshing(false)
@@ -98,7 +110,14 @@ export default function HomeScreen() {
         {/* Question of the Day */}
         {qotd && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Question of the Day</Text>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Question of the Day</Text>
+              {qotdPick !== null && (
+                <View style={styles.completedBadge}>
+                  <Text style={styles.completedBadgeText}>✓ Completed</Text>
+                </View>
+              )}
+            </View>
             <View style={styles.qotdCard}>
               <Text style={styles.qotdLeague}>
                 {leagues.find((l) => l.id === qotd.league_id)
@@ -111,18 +130,23 @@ export default function HomeScreen() {
                   const picked    = qotdPick !== null
                   const isCorrect = i === qotd.correct_answer
                   const isPicked  = i === qotdPick
-                  let optStyle    = styles.qotdOption
-                  let textStyle   = styles.qotdOptionText
-                  if (picked && isCorrect)        { optStyle = { ...styles.qotdOption, ...styles.qotdCorrect }; textStyle = { ...styles.qotdOptionText, color: COLORS.success } }
-                  else if (picked && isPicked)    { optStyle = { ...styles.qotdOption, ...styles.qotdWrong };   textStyle = { ...styles.qotdOptionText, color: COLORS.error } }
+                  const optExtra  = picked && isCorrect ? styles.qotdCorrect : picked && isPicked ? styles.qotdWrong : null
+                  const textColor = picked && isCorrect ? COLORS.success    : picked && isPicked ? COLORS.error    : undefined
                   return (
                     <Pressable
                       key={i}
-                      onPress={() => { if (qotdPick === null) setQotdPick(i) }}
-                      style={optStyle}
+                      onPress={() => {
+                        if (qotdPick === null) {
+                          const today = new Date().toISOString().split('T')[0]
+                          setQotdPick(i)
+                          AsyncStorage.setItem(`qotd_pick_${today}`, String(i))
+                          submitQotdAnswer(qotd!.id, i).catch(() => {/* fire-and-forget */})
+                        }
+                      }}
+                      style={[styles.qotdOption, optExtra]}
                     >
                       <Text style={styles.qotdLabel}>{String.fromCharCode(65 + i)}</Text>
-                      <Text style={textStyle}>{opt}</Text>
+                      <Text style={[styles.qotdOptionText, textColor ? { color: textColor } : null]}>{opt}</Text>
                     </Pressable>
                   )
                 })}
@@ -181,7 +205,7 @@ export default function HomeScreen() {
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.quickBtn}
-              onPress={() => router.push('/(app)/play')}
+              onPress={() => router.push('/(app)/tournaments')}
               activeOpacity={0.8}
             >
               <Text style={styles.quickIcon}>🏆</Text>
@@ -211,6 +235,23 @@ const styles = StyleSheet.create({
   xpRow: { marginBottom: 24 },
 
   section:      { marginBottom: 28 },
+  sectionHeader: {
+    flexDirection:  'row',
+    alignItems:     'center',
+    justifyContent: 'space-between',
+    marginBottom:   12,
+  },
+  completedBadge: {
+    backgroundColor: 'rgba(34,197,94,0.15)',
+    borderRadius:    12,
+    paddingHorizontal: 8,
+    paddingVertical:   3,
+  },
+  completedBadgeText: {
+    color:      '#4ade80',
+    fontSize:   11,
+    fontWeight: '700',
+  },
   sectionTitle: {
     color:         COLORS.textSecondary,
     fontSize:      13,

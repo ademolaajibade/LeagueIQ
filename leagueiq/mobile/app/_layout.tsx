@@ -69,8 +69,9 @@ function InitialLayout() {
     >
       <Stack.Screen name="(auth)" />
       <Stack.Screen name="(app)" />
-      <Stack.Screen name="game"  options={{ animation: 'slide_from_bottom' }} />
-      <Stack.Screen name="match" options={{ animation: 'slide_from_bottom' }} />
+      <Stack.Screen name="game"      options={{ animation: 'slide_from_bottom' }} />
+      <Stack.Screen name="match"     options={{ animation: 'slide_from_bottom' }} />
+      <Stack.Screen name="challenge" options={{ animation: 'slide_from_bottom' }} />
     </Stack>
   )
 }
