@@ -5,10 +5,10 @@ import { adminClient, getToken, respond, unauthorized, badRequest, serverError }
 const MODE_QUESTION_COUNT: Record<string, number> = {
   quick_play: 5,
   daily_challenge: 10,
-  speed_round: 10, // free users; premium users get 20
+  speed_round: 5,
   category_blitz: 10,
 }
-const SPEED_ROUND_PREMIUM_COUNT = 20
+const SPEED_ROUND_PREMIUM_COUNT = 10
 
 // Session expiry in minutes per mode
 const MODE_EXPIRY_MINUTES: Record<string, number> = {

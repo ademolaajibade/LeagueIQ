@@ -15,7 +15,7 @@ type Step = 'league' | 'mode' | 'category'
 const MODES = [
   { mode: 'quick_play'      as GameMode, label: 'Quick Play',      icon: '⚡', desc: '5 questions, pick your category',      needsCategory: true  },
   { mode: 'daily_challenge' as GameMode, label: 'Daily Challenge', icon: '📅', desc: 'One per league, resets at midnight',   needsCategory: false },
-  { mode: 'speed_round'     as GameMode, label: 'Speed Round',     icon: '⏱',  desc: '10–20 questions, 8 seconds each',     needsCategory: false },
+  { mode: 'speed_round'     as GameMode, label: 'Speed Round',     icon: '⏱',  desc: '1–5 questions',     needsCategory: false },
   { mode: 'category_blitz'  as GameMode, label: 'Category Blitz',  icon: '🌍', desc: 'Random mix from all 5 leagues',       needsCategory: false },
   { mode: 'survival'        as const,    label: 'Survival Mode',   icon: '❤️', desc: 'One wrong answer ends everything',    needsCategory: false },
   { mode: 'h2h'             as const,    label: 'Head-to-Head',    icon: '🆚', desc: 'Live 1v1 match vs another player',    needsCategory: false },
