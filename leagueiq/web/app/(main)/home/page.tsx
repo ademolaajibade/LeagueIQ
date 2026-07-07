@@ -268,7 +268,7 @@ export default function HomePage() {
                   className="w-full rounded-xl py-3 text-sm font-bold transition-opacity hover:opacity-85"
                   style={{ background: COLORS.gold, color: '#000' }}
                 >
-                  Play More→
+                  Play More →
                 </button>
               </div>
             )}
