@@ -294,7 +294,7 @@ export default function ProfilePage() {
         >
           <div>
             <p className="text-lg font-black" style={{ color: COLORS.gold }}>
-              Go Premium ⭐
+              Go Premium⭐
             </p>
             <p
               className="text-sm mt-1 leading-relaxed"
